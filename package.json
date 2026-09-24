@@ -2,6 +2,7 @@
   "name": "course-critic",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@12.6.0",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
