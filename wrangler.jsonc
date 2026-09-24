@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "shou-coursecritic-web",
+  "main": ".svelte-kit/cloudflare/_worker.js",
+  "assets": { "directory": ".svelte-kit/cloudflare", "binding": "ASSETS" },
+  "compatibility_date": "2026-09-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "shou-coursecritic",
+      "database_id": "68d50a71-b3f6-4063-9a88-a4c95953f9bf"
+    }
+  ]
+}
