@@ -1,6 +1,6 @@
 # Course Critic
 
-A basic SvelteKit course browser backed by the existing Cloudflare D1 database `shou-coursecritic`. The page reads `courses` from the schema in the neighboring `StructureAnalysis-shou-laixk` repository and supports name or code search and pagination.
+A basic SvelteKit course browser backed by the existing Cloudflare D1 database `shou-coursecritic`. The course list supports name or code search and pagination. Select a course to read its reviews, with instructor names and review pagination. Review text is not searchable.
 
 Cloudflare Workers Builds reads Node.js 26 from `.node-version`. In the Worker dashboard, set **Settings > Build > Build Variables and Secrets** → `PNPM_VERSION=12` so dependency installation uses pnpm 12. The `packageManager` field pins the project's pnpm release.
 

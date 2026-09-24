@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
+  import PagePagination from '$lib/components/page-pagination.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -34,9 +35,11 @@
     <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <ul class="divide-y divide-slate-100">
         {#each data.courses as course (course.course_id)}
-          <li class="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-center sm:gap-6">
-            <span class="w-36 shrink-0 font-mono text-sm text-slate-500">{course.course_id}</span>
-            <span class="font-medium text-slate-900">{course.name}</span>
+          <li>
+            <a class="flex flex-col gap-1 px-5 py-4 hover:bg-slate-50 focus-visible:bg-slate-50 sm:flex-row sm:items-center sm:gap-6" href={`/courses/${encodeURIComponent(course.course_id)}`}>
+              <span class="w-36 shrink-0 font-mono text-sm text-slate-500">{course.course_id}</span>
+              <span class="font-medium text-slate-900">{course.name}</span>
+            </a>
           </li>
         {/each}
       </ul>
@@ -48,18 +51,6 @@
   {/if}
 
   {#if data.pages > 1}
-    <nav aria-label="Course pages" class="mt-6 flex items-center justify-between gap-4 text-sm">
-      {#if data.page > 1}
-        <a class="rounded-md border border-slate-300 bg-white px-4 py-2 hover:bg-slate-50" href={pageUrl(data.page - 1, data.query)}>Previous</a>
-      {:else}
-        <span></span>
-      {/if}
-      <span class="text-slate-600">Page {data.page} of {data.pages}</span>
-      {#if data.page < data.pages}
-        <a class="rounded-md border border-slate-300 bg-white px-4 py-2 hover:bg-slate-50" href={pageUrl(data.page + 1, data.query)}>Next</a>
-      {:else}
-        <span></span>
-      {/if}
-    </nav>
+    <PagePagination count={data.total} perPage={data.pageSize} page={data.page} label="Course pages" pageUrl={(page) => pageUrl(page, data.query)} />
   {/if}
 </main>
