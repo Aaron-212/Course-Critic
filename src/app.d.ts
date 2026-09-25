@@ -3,7 +3,21 @@
 declare global {
   namespace App {
     interface Platform {
-      env: { DB: D1Database };
+      env: {
+        DB: D1Database;
+        PLATFORM_AUTH: {
+          authenticate(cookie: string): Promise<{
+            user: {
+              id: string;
+              email: string;
+              name: string;
+              emailVerified: true;
+              role: "admin" | "user";
+            };
+            expiresAt: string;
+          } | null>;
+        };
+      };
     }
   }
 }
