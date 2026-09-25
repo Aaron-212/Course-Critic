@@ -46,7 +46,7 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
 
 <main class="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
   <section aria-labelledby="search-heading">
-    <form method="GET" role="search" class="mt-7 rounded-lg border border-border bg-card p-4 shadow-xs sm:p-5">
+    <form method="GET" role="search" class="rounded-lg border border-border bg-card p-4 shadow-xs sm:p-5">
       <div class="flex gap-2 sm:gap-3">
         <InputGroup class="h-10 flex-1">
           <InputGroupAddon>
