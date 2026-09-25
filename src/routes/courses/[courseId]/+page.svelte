@@ -13,7 +13,7 @@ const pageUrl = (page: number) => {
 </script>
 
 <svelte:head>
-  <title>{data.course.name} · Course Critic</title>
+  <title>{data.course.name} · SHOU LXK</title>
   <meta name="description" content={`Read reviews for ${data.course.name}.`} />
 </svelte:head>
 

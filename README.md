@@ -1,4 +1,4 @@
-# Course Critic
+# SHOU LXK
 
 A SvelteKit course browser backed by Cloudflare D1. The home page lists course sections by the number of archived reviews for each section. Search by course name or code, and filter by teacher, college, course type, credits, attribute, or minimum review count. Results support sorting and pagination. Select a section card to read its reviews, with instructor names and review pagination. Review text is not searchable.
 
