@@ -1,11 +1,12 @@
 <script lang="ts">
 import { resolve } from "$app/paths";
 import { page } from "$app/state";
-import { ArrowUpRight, Search, SlidersHorizontal } from "@lucide/svelte";
+import { ArrowUpRight, BookOpen, Search, SlidersHorizontal } from "@lucide/svelte";
 import { Button } from "$lib/components/ui/button/index.js";
 import { Input } from "$lib/components/ui/input/index.js";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "$lib/components/ui/input-group/index.js";
 import * as Select from "$lib/components/ui/select/index.js";
+import { Separator } from "$lib/components/ui/separator";
 import PagePagination from "$lib/components/page-pagination.svelte";
 import type { PageData } from "./$types";
 
@@ -42,8 +43,6 @@ const hasAdvancedFilters = $derived(
     data.filters.sort !== "reviews",
   ),
 );
-
-const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground";
 </script>
 
 <svelte:head>
@@ -51,13 +50,21 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
   <meta name="description" content="Find courses by name, teacher, credits, and more at Shanghai Ocean University." />
 </svelte:head>
 
-<main class="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14">
+<main class="mx-auto max-w-6xl px-4 pb-20 pt-10 sm:px-6 sm:pt-14">
+  <header class="mb-8 max-w-2xl sm:mb-10">
+    <p class="mb-3 text-xs font-medium tracking-widest text-muted-foreground uppercase">上海海洋大学 · 课程评价</p>
+    <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">找到适合你的课程</h1>
+    <p class="mt-3 text-sm leading-6 text-muted-foreground sm:text-base">
+      按课程、教师和学院查找课程班级，阅读往届同学的真实评价。
+    </p>
+  </header>
   <section aria-labelledby="search-heading">
-    <form method="GET" role="search" class="rounded-lg border border-border bg-card p-4 shadow-xs sm:p-5">
+    <h2 id="search-heading" class="sr-only">搜索课程</h2>
+    <form method="GET" role="search" class="rounded-xl border border-border bg-card p-4 shadow-xs sm:p-6">
       <div class="flex gap-2 sm:gap-3">
-        <InputGroup class="h-10 flex-1">
+        <InputGroup class="h-10 min-w-0 flex-1">
           <InputGroupAddon>
-            <Search size={18} aria-hidden="true" class="size-4.5" />
+            <Search aria-hidden="true" />
           </InputGroupAddon>
           <InputGroupInput
             name="q"
@@ -70,10 +77,11 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
         <Button type="submit" size="lg" class="sm:min-w-26">搜索</Button>
       </div>
 
-      <details class="mt-4 border-t border-border pt-4" open={hasAdvancedFilters}>
+      <Separator class="my-5" />
+      <details open={hasAdvancedFilters}>
         <summary
           class="inline-flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-foreground hover:text-muted-foreground [&::-webkit-details-marker]:hidden"
-          ><SlidersHorizontal size={16} aria-hidden="true" />高级过滤</summary
+          ><SlidersHorizontal class="size-4" aria-hidden="true" />高级过滤</summary
         >
         <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <label class="flex min-w-0 flex-col gap-2 text-sm font-medium">
@@ -88,10 +96,12 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
                 <Select.Value>{selectValues.college || "所有学院"}</Select.Value>
               </Select.Trigger>
               <Select.Content>
-                <Select.Item value="" label="所有学院">所有学院</Select.Item>
-                {#each data.options.colleges as option}
-                  <Select.Item value={option} label={option}>{option}</Select.Item>
-                {/each}
+                <Select.Group>
+                  <Select.Item value="" label="所有学院">所有学院</Select.Item>
+                  {#each data.options.colleges as option}
+                    <Select.Item value={option} label={option}>{option}</Select.Item>
+                  {/each}
+                </Select.Group>
               </Select.Content>
             </Select.Root>
           </div>
@@ -103,10 +113,12 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
                 <Select.Value>{selectValues.electiveType || "任意类型"}</Select.Value>
               </Select.Trigger>
               <Select.Content>
-                <Select.Item value="" label="任意类型">任意类型</Select.Item>
-                {#each data.options.electiveTypes as option}
-                  <Select.Item value={option} label={option}>{option}</Select.Item>
-                {/each}
+                <Select.Group>
+                  <Select.Item value="" label="任意类型">任意类型</Select.Item>
+                  {#each data.options.electiveTypes as option}
+                    <Select.Item value={option} label={option}>{option}</Select.Item>
+                  {/each}
+                </Select.Group>
               </Select.Content>
             </Select.Root>
           </div>
@@ -118,10 +130,12 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
                 <Select.Value>{selectValues.credits || "任意值"}</Select.Value>
               </Select.Trigger>
               <Select.Content>
-                <Select.Item value="" label="任意值">任意值</Select.Item>
-                {#each data.options.credits as option}
-                  <Select.Item value={String(option)} label={String(option)}>{option}</Select.Item>
-                {/each}
+                <Select.Group>
+                  <Select.Item value="" label="任意值">任意值</Select.Item>
+                  {#each data.options.credits as option}
+                    <Select.Item value={String(option)} label={String(option)}>{option}</Select.Item>
+                  {/each}
+                </Select.Group>
               </Select.Content>
             </Select.Root>
           </div>
@@ -133,10 +147,12 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
                 <Select.Value>{selectValues.attribute || "任意属性"}</Select.Value>
               </Select.Trigger>
               <Select.Content>
-                <Select.Item value="" label="任意属性">任意属性</Select.Item>
-                {#each data.options.attributes as option}
-                  <Select.Item value={option} label={option}>{option}</Select.Item>
-                {/each}
+                <Select.Group>
+                  <Select.Item value="" label="任意属性">任意属性</Select.Item>
+                  {#each data.options.attributes as option}
+                    <Select.Item value={option} label={option}>{option}</Select.Item>
+                  {/each}
+                </Select.Group>
               </Select.Content>
             </Select.Root>
           </div>
@@ -162,9 +178,11 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
                 </Select.Value>
               </Select.Trigger>
               <Select.Content>
-                <Select.Item value="reviews" label="最多评价">最多评价</Select.Item>
-                <Select.Item value="name" label="名称">名称</Select.Item>
-                <Select.Item value="credits" label="最多学分">最多学分</Select.Item>
+                <Select.Group>
+                  <Select.Item value="reviews" label="最多评价">最多评价</Select.Item>
+                  <Select.Item value="name" label="名称">名称</Select.Item>
+                  <Select.Item value="credits" label="最多学分">最多学分</Select.Item>
+                </Select.Group>
               </Select.Content>
             </Select.Root>
           </div>
@@ -177,18 +195,18 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
     </form>
   </section>
 
-  <section aria-labelledby="courses-heading" class="mt-11 sm:mt-14">
+  <section aria-labelledby="courses-heading" class="mt-10 sm:mt-12">
     <div class="mb-5 flex items-end justify-between gap-4">
       <div>
-        <p class="mb-1 text-xs font-semibold text-muted-foreground uppercase">
+        <p class="mb-1 text-xs font-medium tracking-widest text-muted-foreground uppercase">
           {data.isSearching ? "课程搜索" : "探索"}
         </p>
-        <h2 id="courses-heading" class="text-2xl font-semibold">
+        <h2 id="courses-heading" class="text-2xl font-semibold tracking-tight">
           {data.isSearching ? "搜索结果" : "热门课程"}
         </h2>
       </div>
-      <p class="whitespace-nowrap text-sm text-muted-foreground">
-        {data.total.toLocaleString()}个课程班级
+      <p class="whitespace-nowrap text-sm tabular-nums text-muted-foreground">
+        共 {data.total.toLocaleString()} 个班级
       </p>
     </div>
 
@@ -196,36 +214,43 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {#each data.sections as section (section.lid)}
           <a
-            class="flex min-h-55 min-w-0 flex-col rounded-lg border border-border bg-card p-5 text-card-foreground no-underline shadow-xs transition-all duration-150 hover:-translate-y-0.5 hover:border-ring hover:shadow-lg focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            class="group flex min-h-52 min-w-0 flex-col rounded-xl border border-border bg-card p-5 text-card-foreground no-underline shadow-xs transition-[border-color,box-shadow] hover:border-ring hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             href={sectionUrl(section.course_id, section.lid)}
           >
-            <div class="flex justify-between gap-2 text-xs text-muted-foreground">
-              <span class="tabular-nums">{section.course_id}</span>
+            <div class="flex items-start justify-between gap-3">
+              <span class="text-xs font-medium tabular-nums text-muted-foreground">{section.course_id}</span>
+              <ArrowUpRight
+                class="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground"
+                aria-hidden="true"
+              />
             </div>
-            <div class="my-4">
-              <h3 class="wrap-anywhere text-lg leading-snug font-semibold">{section.name}</h3>
-              <p class="mt-1 wrap-anywhere text-sm text-muted-foreground">{section.teacher_name}</p>
+            <div class="mt-5 mb-6">
+              <h3 class="wrap-anywhere text-lg leading-snug font-semibold tracking-tight">{section.name}</h3>
+              <p class="mt-2 wrap-anywhere text-sm text-muted-foreground">{section.teacher_name}</p>
             </div>
-            <div class="mt-auto mb-4 flex flex-wrap gap-1.5">
-              <span class={tagClass}>{section.college}</span>
-              {#if section.elective_type && section.elective_type !== "N/A"}<span class={tagClass}
+            <div class="mt-auto flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
+              <span class="truncate">{section.college}</span>
+              {#if section.elective_type && section.elective_type !== "N/A"}<span aria-hidden="true">·</span><span
                   >{section.elective_type}</span
                 >{/if}
             </div>
-            <div class="flex items-center gap-3 border-t border-border pt-3 text-xs text-muted-foreground">
-              <span>{section.credits}学分</span>
-              <span>{section.review_count}个评价</span>
-              <ArrowUpRight size={17} aria-hidden="true" class="ml-auto text-foreground" />
+            <Separator class="my-3" />
+            <div class="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+              <span>{section.credits} 学分</span>
+              <span class="tabular-nums">{section.review_count} 个评价</span>
             </div>
           </a>
         {/each}
       </div>
     {:else}
       <div
-        class="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border px-4 py-14 text-center"
+        class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border px-4 py-14 text-center"
       >
+        <span class="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+          ><BookOpen class="size-5" aria-hidden="true" /></span
+        >
         <h3 class="text-lg font-semibold">没有找到课程</h3>
-        <p class="text-sm text-muted-foreground">试试别的名字？</p>
+        <p class="text-sm text-muted-foreground">试试其他关键词或调整过滤条件。</p>
         <Button href="/" variant="outline" class="mt-1">清空过滤器</Button>
       </div>
     {/if}

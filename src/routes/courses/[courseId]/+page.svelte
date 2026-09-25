@@ -1,4 +1,7 @@
 <script lang="ts">
+import { ArrowLeft, MessageSquareText } from "@lucide/svelte";
+import { Button } from "$lib/components/ui/button";
+import { Separator } from "$lib/components/ui/separator";
 import PagePagination from "$lib/components/page-pagination.svelte";
 import type { PageData } from "./$types";
 
@@ -17,41 +20,54 @@ const pageUrl = (page: number) => {
   <meta name="description" content={`Read reviews for ${data.course.name}.`} />
 </svelte:head>
 
-<main class="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-  <a href={data.backUrl} class="text-sm text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline"
-    >← Courses</a
-  >
+<main class="mx-auto max-w-4xl px-4 pb-20 pt-8 sm:px-6 sm:pt-10">
+  <Button href={data.backUrl} variant="ghost" size="sm" class="-ml-3">
+    <ArrowLeft data-icon="inline-start" aria-hidden="true" />返回课程列表
+  </Button>
 
-  <header class="mb-8 mt-6">
-    <p class="mb-2 tabular-nums text-sm text-slate-500">{data.course.course_id}</p>
-    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{data.course.name}</h1>
+  <header class="mt-8 mb-8 sm:mt-10 sm:mb-10">
+    <p class="mb-3 text-xs font-medium tracking-widest text-muted-foreground uppercase">
+      课程评价 <span aria-hidden="true">/</span>
+      {data.course.course_id}
+    </p>
+    <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">{data.course.name}</h1>
     {#if data.section}
-      <p class="mt-2 text-slate-600">{data.section.teacher_name}</p>
+      <p class="mt-3 text-base text-muted-foreground">授课教师 · {data.section.teacher_name}</p>
     {/if}
-    <p class="mt-3 text-slate-600">{data.total.toLocaleString()}个评价</p>
   </header>
 
+  <div class="mb-5 flex items-center justify-between gap-4">
+    <h2 class="text-lg font-semibold tracking-tight">同学评价</h2>
+    <p class="text-sm tabular-nums text-muted-foreground">共 {data.total.toLocaleString()} 条</p>
+  </div>
+
   {#if data.reviews.length}
-    <ol class="space-y-4">
+    <ol class="flex flex-col gap-4">
       {#each data.reviews as review (`${review.lid}-${review.position}`)}
-        <li class="rounded-lg border border-slate-200 bg-white px-5 py-5 shadow-sm">
+        <li class="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-xs sm:p-6">
           {#if review.title}
-            <h2 class="text-lg font-semibold text-slate-900">{review.title}</h2>
+            <h3 class="text-base font-semibold tracking-tight">{review.title}</h3>
           {/if}
-          <p class="text-sm text-slate-500" class:mt-1={review.title}>
+          <p class="text-sm text-muted-foreground" class:mt-2={review.title}>
             {review.teacher_name} · <time>{review.posted_at_local}</time>
           </p>
-          <p class="mt-4 whitespace-pre-wrap wrap-break-words leading-relaxed text-slate-700">{review.content}</p>
+          <Separator class="my-4" />
+          <p class="whitespace-pre-wrap wrap-break-words text-sm leading-7 sm:text-base">{review.content}</p>
         </li>
       {/each}
     </ol>
   {:else}
-    <div class="rounded-lg border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-slate-600">
-      没有评价。
+    <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border px-6 py-14 text-center">
+      <span class="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+        ><MessageSquareText class="size-5" aria-hidden="true" /></span
+      >
+      <h3 class="text-lg font-semibold">暂无评价</h3>
+      <p class="text-sm text-muted-foreground">这门课还没有可展示的评价。</p>
+      <Button href={data.backUrl} variant="outline" class="mt-1">浏览其他课程</Button>
     </div>
   {/if}
 
   {#if data.pages > 1}
-    <PagePagination count={data.total} perPage={data.pageSize} page={data.page} label="Review pages" {pageUrl} />
+    <PagePagination count={data.total} perPage={data.pageSize} page={data.page} label="评价页面" {pageUrl} />
   {/if}
 </main>
