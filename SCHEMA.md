@@ -11,7 +11,7 @@
 
 A section belongs to one course. Reviews refer directly to sections through `lid`; `position` preserves the order of each source response. `posted_at_local` stores the source's UTC+8 wall-clock text. The original comma-separated teacher string remains in `teacher_list_raw`. Empty and missing attributes remain distinct (`''` and `NULL`).
 
-Review totals are computed from `reviews`, including for the home page ranking and minimum review filter. The old `hot_entries`, `review_fetches`, `comments_count`, and `hits` data is removed. Historical likes and dislikes are reset to zero during migration.
+Review totals are computed from `reviews` per section, including for the home page ranking and minimum review filter. The home page lists `course_section` rows and joins `courses` for course names. The old `hot_entries`, `review_fetches`, `comments_count`, and `hits` data is removed. Historical likes and dislikes are reset to zero during migration.
 
 ## Migration
 

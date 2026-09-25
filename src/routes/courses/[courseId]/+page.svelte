@@ -6,6 +6,7 @@ let { data }: { data: PageData } = $props();
 
 const pageUrl = (page: number) => {
   const params = new URLSearchParams({ page: String(page) });
+  if (data.section) params.set("lid", data.section.lid);
   if (data.backUrl !== "/") params.set("from", data.backUrl);
   return `?${params}`;
 };
@@ -24,6 +25,9 @@ const pageUrl = (page: number) => {
   <header class="mb-8 mt-6">
     <p class="mb-2 tabular-nums text-sm text-slate-500">{data.course.course_id}</p>
     <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{data.course.name}</h1>
+    {#if data.section}
+      <p class="mt-2 text-slate-600">{data.section.teacher_name} · 班级 {data.section.lid}</p>
+    {/if}
     <p class="mt-3 text-slate-600">{data.total.toLocaleString()}个评价</p>
   </header>
 

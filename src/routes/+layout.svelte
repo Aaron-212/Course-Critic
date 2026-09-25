@@ -14,7 +14,7 @@ let { children, data }: { children: Snippet; data: LayoutData } = $props();
       {#if data.authenticated}
         <Button href={data.accountUrl} variant="outline" size="sm">账号</Button>
       {:else}
-        <Button href={data.signInUrl} variant="outline" size="sm">登陆</Button>
+        <Button href={data.signInUrl} variant="outline" size="sm">登录</Button>
         <Button href={data.registerUrl} size="sm">注册</Button>
       {/if}
     </div>

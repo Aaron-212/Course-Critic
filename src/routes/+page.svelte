@@ -26,8 +26,8 @@ const pageUrl = (page: number) => {
   return `/?${params}`;
 };
 
-const courseUrl = (courseId: string) => {
-  const params = new URLSearchParams({ from: page.url.pathname + page.url.search });
+const sectionUrl = (courseId: string, lid: string) => {
+  const params = new URLSearchParams({ lid, from: page.url.pathname + page.url.search });
   return `${resolve("/courses/[courseId]", { courseId })}?${params}`;
 };
 
@@ -188,33 +188,34 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
         </h2>
       </div>
       <p class="whitespace-nowrap text-sm text-muted-foreground">
-        {data.total.toLocaleString()}个课程
+        {data.total.toLocaleString()}个课程班级
       </p>
     </div>
 
-    {#if data.courses.length}
+    {#if data.sections.length}
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {#each data.courses as course (course.course_id)}
+        {#each data.sections as section (section.lid)}
           <a
             class="flex min-h-55 min-w-0 flex-col rounded-lg border border-border bg-card p-5 text-card-foreground no-underline shadow-xs transition-all duration-150 hover:-translate-y-0.5 hover:border-ring hover:shadow-lg focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            href={courseUrl(course.course_id)}
+            href={sectionUrl(section.course_id, section.lid)}
           >
             <div class="flex justify-between gap-2 text-xs text-muted-foreground">
-              <span class="tabular-nums">{course.course_id}</span>
+              <span class="tabular-nums">{section.course_id}</span>
+              <span class="tabular-nums">班级 {section.lid}</span>
             </div>
             <div class="my-4">
-              <h3 class="wrap-anywhere text-lg leading-snug font-semibold">{course.name}</h3>
-              <p class="mt-1 wrap-anywhere text-sm text-muted-foreground">{course.teacher_name}</p>
+              <h3 class="wrap-anywhere text-lg leading-snug font-semibold">{section.name}</h3>
+              <p class="mt-1 wrap-anywhere text-sm text-muted-foreground">{section.teacher_name}</p>
             </div>
             <div class="mt-auto mb-4 flex flex-wrap gap-1.5">
-              <span class={tagClass}>{course.college}</span>
-              {#if course.elective_type && course.elective_type !== "N/A"}<span class={tagClass}
-                  >{course.elective_type}</span
+              <span class={tagClass}>{section.college}</span>
+              {#if section.elective_type && section.elective_type !== "N/A"}<span class={tagClass}
+                  >{section.elective_type}</span
                 >{/if}
             </div>
             <div class="flex items-center gap-3 border-t border-border pt-3 text-xs text-muted-foreground">
-              <span>{course.credits}学分</span>
-              <span>{course.review_count}个评价</span>
+              <span>{section.credits}学分</span>
+              <span>{section.review_count}个评价</span>
               <ArrowUpRight size={17} aria-hidden="true" class="ml-auto text-foreground" />
             </div>
           </a>

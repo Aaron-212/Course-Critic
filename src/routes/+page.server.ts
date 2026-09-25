@@ -3,7 +3,8 @@ import type { PageServerLoad } from "./$types";
 
 const PAGE_SIZE = 12;
 
-type CourseCard = {
+type SectionCard = {
+  lid: string;
   course_id: string;
   name: string;
   teacher_name: string;
@@ -100,7 +101,7 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     values.push(Number(filters.credits));
   }
   if (filters.minReviews) {
-    clauses.push("COALESCE(cr.review_count, 0) >= ?");
+    clauses.push("COALESCE(sr.review_count, 0) >= ?");
     values.push(Number(filters.minReviews));
   }
 
@@ -108,21 +109,15 @@ export const load: PageServerLoad = async ({ platform, url }) => {
   const reviewCounts = `
     WITH section_reviews AS (
       SELECT lid, COUNT(*) AS review_count FROM reviews GROUP BY lid
-    ), course_reviews AS (
-      SELECT cs.course_id, SUM(COALESCE(sr.review_count, 0)) AS review_count
-      FROM course_section AS cs
-      LEFT JOIN section_reviews AS sr ON sr.lid = cs.lid
-      GROUP BY cs.course_id
     )`;
   const matching = `
     FROM course_section AS cs
     JOIN courses AS c ON c.course_id = cs.course_id
     LEFT JOIN section_reviews AS sr ON sr.lid = cs.lid
-    LEFT JOIN course_reviews AS cr ON cr.course_id = c.course_id
     ${where}`;
 
   const countRow = await db
-    .prepare(`${reviewCounts} SELECT COUNT(DISTINCT c.course_id) AS total ${matching}`)
+    .prepare(`${reviewCounts} SELECT COUNT(*) AS total ${matching}`)
     .bind(...values)
     .first<{ total: number }>();
   const total = countRow?.total ?? 0;
@@ -136,27 +131,21 @@ export const load: PageServerLoad = async ({ platform, url }) => {
   }[sort];
 
   const result = await db
-    .prepare(`
-      ${reviewCounts}, matches AS (
-        SELECT c.course_id, c.name, cs.teacher_name, cs.college, cs.elective_type,
-          cs.credits, COALESCE(cr.review_count, 0) AS review_count,
-          ROW_NUMBER() OVER (
-            PARTITION BY c.course_id
-            ORDER BY COALESCE(sr.review_count, 0) DESC, cs.lid
-          ) AS section_number
-        ${matching}
-      )
-      SELECT course_id, name, teacher_name, college, elective_type, credits, review_count
-      FROM matches
-      WHERE section_number = 1
-      ORDER BY ${orderBy}, course_id
+    .prepare(
+      `
+      ${reviewCounts}
+      SELECT cs.lid, c.course_id, c.name, cs.teacher_name, cs.college, cs.elective_type,
+        cs.credits, COALESCE(sr.review_count, 0) AS review_count
+      ${matching}
+      ORDER BY ${orderBy}, c.course_id, cs.lid
       LIMIT ? OFFSET ?
-    `)
+    `,
+    )
     .bind(...values, PAGE_SIZE, (currentPage - 1) * PAGE_SIZE)
-    .all<CourseCard>();
+    .all<SectionCard>();
 
   return {
-    courses: result.results,
+    sections: result.results,
     filters,
     isSearching,
     page: currentPage,
