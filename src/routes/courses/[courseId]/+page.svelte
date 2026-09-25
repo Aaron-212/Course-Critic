@@ -26,7 +26,7 @@ const pageUrl = (page: number) => {
     <p class="mb-2 tabular-nums text-sm text-slate-500">{data.course.course_id}</p>
     <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{data.course.name}</h1>
     {#if data.section}
-      <p class="mt-2 text-slate-600">{data.section.teacher_name} · 班级 {data.section.lid}</p>
+      <p class="mt-2 text-slate-600">{data.section.teacher_name}</p>
     {/if}
     <p class="mt-3 text-slate-600">{data.total.toLocaleString()}个评价</p>
   </header>
@@ -47,7 +47,7 @@ const pageUrl = (page: number) => {
     </ol>
   {:else}
     <div class="rounded-lg border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-slate-600">
-      No reviews for this course yet.
+      没有评价。
     </div>
   {/if}
 

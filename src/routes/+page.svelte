@@ -201,7 +201,6 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
           >
             <div class="flex justify-between gap-2 text-xs text-muted-foreground">
               <span class="tabular-nums">{section.course_id}</span>
-              <span class="tabular-nums">班级 {section.lid}</span>
             </div>
             <div class="my-4">
               <h3 class="wrap-anywhere text-lg leading-snug font-semibold">{section.name}</h3>
