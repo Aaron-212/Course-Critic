@@ -1,10 +1,10 @@
 <script lang="ts">
-  import PagePagination from '$lib/components/page-pagination.svelte';
-  import type { PageData } from "./$types";
+import PagePagination from "$lib/components/page-pagination.svelte";
+import type { PageData } from "./$types";
 
-  let { data }: { data: PageData } = $props();
+let { data }: { data: PageData } = $props();
 
-  const pageUrl = (page: number) => `?page=${page}`;
+const pageUrl = (page: number) => `?page=${page}`;
 </script>
 
 <svelte:head>
@@ -16,9 +16,9 @@
   <a href="/" class="text-sm text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline">← Courses</a>
 
   <header class="mb-8 mt-6">
-    <p class="mb-2 font-mono text-sm text-slate-500">{data.course.course_id}</p>
+    <p class="mb-2 tabular-nums text-sm text-slate-500">{data.course.course_id}</p>
     <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">{data.course.name}</h1>
-    <p class="mt-3 text-slate-600">{data.total.toLocaleString()} {data.total === 1 ? "review" : "reviews"}</p>
+    <p class="mt-3 text-slate-600">{data.total.toLocaleString()}个评价</p>
   </header>
 
   {#if data.reviews.length}

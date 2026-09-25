@@ -1,20 +1,20 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import * as Pagination from '$lib/components/ui/pagination/index.js';
+import { goto } from "$app/navigation";
+import * as Pagination from "$lib/components/ui/pagination/index.js";
 
-  let {
-    count,
-    perPage,
-    page,
-    label,
-    pageUrl
-  }: {
-    count: number;
-    perPage: number;
-    page: number;
-    label: string;
-    pageUrl: (page: number) => string;
-  } = $props();
+let {
+  count,
+  perPage,
+  page,
+  label,
+  pageUrl,
+}: {
+  count: number;
+  perPage: number;
+  page: number;
+  label: string;
+  pageUrl: (page: number) => string;
+} = $props();
 </script>
 
 <Pagination.Root
@@ -30,7 +30,7 @@
       <Pagination.Item><Pagination.Previous /></Pagination.Item>
       {#each pages as item (item.key)}
         <Pagination.Item>
-          {#if item.type === 'ellipsis'}
+          {#if item.type === "ellipsis"}
             <Pagination.Ellipsis />
           {:else}
             <Pagination.Link page={item} isActive={currentPage === item.value} />

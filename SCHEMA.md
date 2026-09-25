@@ -4,14 +4,14 @@ The canonical import source is `archive/normalized/`. Run `python3 import_archiv
 
 ## Data model
 
-| Table | Grain | Source |
-| --- | --- | --- |
-| `courses` | One distinct course code | `courses.json` |
-| `course_instructors` | One API `lid` (course and teacher listing) | `courses.json` |
-| `review_fetches` | One response per `lid` | `reviews.jsonl` |
-| `reviews` | One review in its original response order | `reviews.jsonl` |
-| `hot_entries` | One ranked row, including repeated course codes | `hot.json` |
-| `category_options` | One selectable category value in source order | `category.json` |
+| Table                | Grain                                           | Source          |
+| -------------------- | ----------------------------------------------- | --------------- |
+| `courses`            | One distinct course code                        | `courses.json`  |
+| `course_instructors` | One API `lid` (course and teacher listing)      | `courses.json`  |
+| `review_fetches`     | One response per `lid`                          | `reviews.jsonl` |
+| `reviews`            | One review in its original response order       | `reviews.jsonl` |
+| `hot_entries`        | One ranked row, including repeated course codes | `hot.json`      |
+| `category_options`   | One selectable category value in source order   | `category.json` |
 
 Course IDs and `lid` values are `TEXT` because source course codes include letters and leading-zero preservation matters. A `lid` identifies a course–teacher listing, not a globally unique teacher. The archive has one name per course ID, but college, elective type, credits, attributes, and counters can differ among listings of the same course; those fields therefore belong to `course_instructors`. The original comma-separated teacher string is retained as `teacher_list_raw` for fidelity. The hot list keeps its own observed fields and rank because the same course code can occur more than once.
 
@@ -23,14 +23,14 @@ The Cloudflare D1 database is `shou-coursecritic` (binding `DB`) in APAC. Its ID
 
 ## Validation for this snapshot
 
-| Table | Rows |
-| --- | ---: |
-| `courses` | 1,910 |
+| Table                |  Rows |
+| -------------------- | ----: |
+| `courses`            | 1,910 |
 | `course_instructors` | 3,287 |
-| `review_fetches` | 3,287 |
-| `reviews` | 5,631 |
-| `hot_entries` | 60 |
-| `category_options` | 97 |
+| `review_fetches`     | 3,287 |
+| `reviews`            | 5,631 |
+| `hot_entries`        |    60 |
+| `category_options`   |    97 |
 
 The importer checks these counts, review response lengths, course-name consistency, and foreign keys. SQLite `PRAGMA integrity_check` returns `ok` after import.
 

@@ -8,6 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "lint": "oxlint .",
+    "format": "oxfmt .",
     "deploy": "pnpm build && wrangler deploy"
   },
   "devDependencies": {
@@ -19,6 +21,8 @@
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@tailwindcss/vite": "^4.3.3",
     "bits-ui": "^2.19.3",
+    "oxfmt": "^0.70.0",
+    "oxlint": "^1.85.0",
     "shadcn-svelte": "^1.7.0",
     "svelte": "^5.57.1",
     "svelte-check": "^4.7.6",
