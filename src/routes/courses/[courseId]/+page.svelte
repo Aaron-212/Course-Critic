@@ -1,4 +1,6 @@
 <script lang="ts">
+import { goto } from "$app/navigation";
+import * as Select from "$lib/components/ui/select";
 import { ArrowLeft, MessageSquareText } from "@lucide/svelte";
 import { Button } from "$lib/components/ui/button";
 import { Input } from "$lib/components/ui/input";
@@ -9,8 +11,9 @@ import type { ActionData, PageData } from "./$types";
 
 let { data, form }: { data: PageData; form: ActionData } = $props();
 
-const pageUrl = (page: number) => {
+const pageUrl = (page: number, sort = data.sort) => {
   const params = new URLSearchParams({ page: String(page) });
+  if (sort === "oldest") params.set("sort", sort);
   if (data.section) params.set("lid", data.section.lid);
   if (data.backUrl !== "/") params.set("from", data.backUrl);
   return `?${params}`;
@@ -107,14 +110,35 @@ const pageUrl = (page: number) => {
     </section>
   {/if}
 
-  <div class="mb-5 flex items-center justify-between gap-4">
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-4">
     <h2 class="text-lg font-semibold tracking-tight">同学评价</h2>
-    <p class="text-sm tabular-nums text-muted-foreground">共 {data.total.toLocaleString()} 条</p>
+    <div class="flex items-center gap-3">
+      <p class="text-sm tabular-nums text-muted-foreground">共 {data.total.toLocaleString()} 条</p>
+      <Select.Root
+        type="single"
+        value={data.sort}
+        onValueChange={(value) => {
+          if (value === "latest" || value === "oldest") {
+            void goto(pageUrl(1, value), { noScroll: true, keepFocus: true });
+          }
+        }}
+      >
+        <Select.Trigger aria-label="评价排序">
+          <Select.Value>{data.sort === "oldest" ? "最早优先" : "最新优先"}</Select.Value>
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Group>
+            <Select.Item value="latest" label="最新优先">最新优先</Select.Item>
+            <Select.Item value="oldest" label="最早优先">最早优先</Select.Item>
+          </Select.Group>
+        </Select.Content>
+      </Select.Root>
+    </div>
   </div>
 
   {#if data.reviews.length}
     <ol class="flex flex-col gap-4">
-      {#each data.reviews as review (`${review.lid}-${review.position}`)}
+      {#each data.reviews as review (review.id)}
         <li class="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-xs sm:p-6">
           {#if review.title}
             <h3 class="text-base font-semibold tracking-tight">{review.title}</h3>

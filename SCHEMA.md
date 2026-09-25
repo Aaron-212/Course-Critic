@@ -6,16 +6,16 @@
 | ------------------ | ------------------------------------------ | ----------------------------: |
 | `courses`          | One course code                            |                         1,910 |
 | `course_section`   | One API `lid` (course and teacher listing) |                         3,287 |
-| `reviews`          | One review in original response order      |                         5,631 |
+| `reviews`          | One review with a stable integer ID      |                         5,631 |
 | `category_options` | One selectable category value              |                            97 |
 
-A section belongs to one course. Reviews refer directly to sections through `lid`; `position` preserves the order of each source response. `posted_at_local` stores the source's UTC+8 wall-clock text. The original comma-separated teacher string remains in `teacher_list_raw`. Empty and missing attributes remain distinct (`''` and `NULL`).
+A section belongs to one course. Reviews refer directly to sections through `lid`; `id` is an automatically assigned integer primary key. Reviews default to newest first by `posted_at_local`, with `id` breaking timestamp ties; readers can switch to oldest first. `posted_at_local` stores the source's UTC+8 wall-clock text. The original comma-separated teacher string remains in `teacher_list_raw`. Empty and missing attributes remain distinct (`''` and `NULL`).
 
 Review totals are computed from `reviews` per section, including for the home page ranking and minimum review filter. The home page lists `course_section` rows and joins `courses` for course names. The old `hot_entries`, `review_fetches`, `comments_count`, and `hits` data is removed. Historical likes and dislikes are reset to zero during migration.
 
 ## Migration
 
-[`migrations/0001_section_schema.sql`](migrations/0001_section_schema.sql) converts a database with the original `shou-coursecritic` schema. It copies sections and reviews into the new strict tables, recreates the review foreign key, then removes the old tables. Run it once against an existing database. For a new empty database, use `schema.sql` and import data in the new column layout.
+[`migrations/0001_section_schema.sql`](migrations/0001_section_schema.sql) converts a database with the original `shou-coursecritic` schema. It copies sections and reviews into the new strict tables, recreates the review foreign key, then removes the old tables. Apply migrations in order against an existing database. [`0002_review_ids.sql`](migrations/0002_review_ids.sql) preserves all review content while replacing `position` with `id` and adding a section lookup index. Apply this migration before deploying the updated review page. For a new empty database, use `schema.sql` and import data in the new column layout.
 
 The original archive importer and SQL snapshot are in the sibling `StructureAnalysis-shou-laixk` repository. That snapshot still uses the old schema. To use it locally, import the snapshot first and then apply the migration:
 

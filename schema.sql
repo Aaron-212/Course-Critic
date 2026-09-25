@@ -23,14 +23,14 @@ CREATE INDEX course_section_teacher_name_idx ON course_section(teacher_name);
 CREATE INDEX course_section_college_idx ON course_section(college);
 
 CREATE TABLE reviews (
+    id INTEGER PRIMARY KEY,
     lid TEXT NOT NULL REFERENCES course_section(lid),
-    position INTEGER NOT NULL CHECK (position >= 1),
     title TEXT NOT NULL,
     content TEXT NOT NULL,
-    posted_at_local TEXT NOT NULL,
-    PRIMARY KEY (lid, position)
-) WITHOUT ROWID, STRICT;
+    posted_at_local TEXT NOT NULL
+) STRICT;
 
+CREATE INDEX reviews_lid_idx ON reviews(lid);
 CREATE INDEX reviews_posted_at_idx ON reviews(posted_at_local);
 
 CREATE TABLE category_options (

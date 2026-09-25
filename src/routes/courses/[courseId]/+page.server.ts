@@ -8,7 +8,7 @@ type Course = { course_id: string; name: string };
 type Section = { lid: string; teacher_name: string };
 type Review = {
   lid: string;
-  position: number;
+  id: number;
   title: string;
   content: string;
   posted_at_local: string;
@@ -67,13 +67,16 @@ export const load: PageServerLoad = async ({ params, platform, url, parent }) =>
   const requestedPage = Number(url.searchParams.get("page") ?? "1");
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, pages) : 1;
 
+  const sort = url.searchParams.get("sort") === "oldest" ? "oldest" : "latest";
+  const direction = sort === "oldest" ? "ASC" : "DESC";
+
   const { results: reviews } = await db
     .prepare(`
-    SELECT r.lid, r.position, r.title, r.content, r.posted_at_local
+    SELECT r.id, r.lid, r.title, r.content, r.posted_at_local
     FROM course_section AS ci
     JOIN reviews AS r ON r.lid = ci.lid
     WHERE ci.course_id = ? ${sectionFilter}
-    ORDER BY r.posted_at_local DESC, r.lid, r.position
+    ORDER BY r.posted_at_local ${direction}, r.id ${direction}
     LIMIT ? OFFSET ?
   `)
     .bind(...reviewValues, PAGE_SIZE, (page - 1) * PAGE_SIZE)
@@ -85,6 +88,7 @@ export const load: PageServerLoad = async ({ params, platform, url, parent }) =>
     section,
     sections: sections.results,
     reviews,
+    sort,
     total,
     page,
     pages,
@@ -128,11 +132,10 @@ export const actions: Actions = {
     const postedAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 19).replace("T", " ");
     await db
       .prepare(`
-        INSERT INTO reviews (lid, position, title, content, posted_at_local)
-        SELECT ?, COALESCE(MAX(position), 0) + 1, ?, ?, ?
-        FROM reviews WHERE lid = ?
+        INSERT INTO reviews (lid, title, content, posted_at_local)
+        VALUES (?, ?, ?, ?)
       `)
-      .bind(lid, title, content, postedAt, lid)
+      .bind(lid, title, content, postedAt)
       .run();
 
     const destination = new URL(url.pathname, url);
