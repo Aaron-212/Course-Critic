@@ -3,10 +3,17 @@ import { ArrowUpRight, Search, SlidersHorizontal } from "@lucide/svelte";
 import { Button } from "$lib/components/ui/button/index.js";
 import { Input } from "$lib/components/ui/input/index.js";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "$lib/components/ui/input-group/index.js";
+import * as Select from "$lib/components/ui/select/index.js";
 import PagePagination from "$lib/components/page-pagination.svelte";
 import type { PageData } from "./$types";
 
 let { data }: { data: PageData } = $props();
+// svelte-ignore state_referenced_locally
+let selectValues = $state({ ...data.filters });
+
+$effect(() => {
+  Object.assign(selectValues, data.filters);
+});
 
 const pageUrl = (page: number) => {
   const params = new URLSearchParams();
@@ -29,8 +36,6 @@ const hasAdvancedFilters = $derived(
   ),
 );
 
-const selectClass =
-  "h-9 w-full min-w-0 rounded-md border border-input bg-background px-2.5 text-sm text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30";
 const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground";
 </script>
 
@@ -69,45 +74,65 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
             <Input name="teacher" value={data.filters.teacher} placeholder="教师名" />
           </label>
 
-          <label class="flex min-w-0 flex-col gap-2 text-sm font-medium">
-            <span>学院</span>
-            <select name="college" class={selectClass} value={data.filters.college}>
-              <option value="">所有学院</option>
-              {#each data.options.colleges as college}
-                <option value={college}>{college}</option>
-              {/each}
-            </select>
-          </label>
+          <div class="flex min-w-0 flex-col gap-2 text-sm font-medium">
+            <label for="college">学院</label>
+            <Select.Root type="single" name="college" bind:value={selectValues.college}>
+              <Select.Trigger id="college" class="w-full min-w-0">
+                <Select.Value>{selectValues.college || "所有学院"}</Select.Value>
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="" label="所有学院">所有学院</Select.Item>
+                {#each data.options.colleges as option}
+                  <Select.Item value={option} label={option}>{option}</Select.Item>
+                {/each}
+              </Select.Content>
+            </Select.Root>
+          </div>
 
-          <label class="flex min-w-0 flex-col gap-2 text-sm font-medium">
-            <span>课程类型</span>
-            <select name="electiveType" class={selectClass} value={data.filters.electiveType}>
-              <option value="">任意类型</option>
-              {#each data.options.electiveTypes as type}
-                <option value={type}>{type}</option>
-              {/each}
-            </select>
-          </label>
+          <div class="flex min-w-0 flex-col gap-2 text-sm font-medium">
+            <label for="electiveType">课程类型</label>
+            <Select.Root type="single" name="electiveType" bind:value={selectValues.electiveType}>
+              <Select.Trigger id="electiveType" class="w-full min-w-0">
+                <Select.Value>{selectValues.electiveType || "任意类型"}</Select.Value>
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="" label="任意类型">任意类型</Select.Item>
+                {#each data.options.electiveTypes as option}
+                  <Select.Item value={option} label={option}>{option}</Select.Item>
+                {/each}
+              </Select.Content>
+            </Select.Root>
+          </div>
 
-          <label class="flex min-w-0 flex-col gap-2 text-sm font-medium">
-            <span>学分</span>
-            <select name="credits" class={selectClass} value={data.filters.credits}>
-              <option value="">任意值</option>
-              {#each data.options.credits as credits}
-                <option value={credits}>{credits}</option>
-              {/each}
-            </select>
-          </label>
+          <div class="flex min-w-0 flex-col gap-2 text-sm font-medium">
+            <label for="credits">学分</label>
+            <Select.Root type="single" name="credits" bind:value={selectValues.credits}>
+              <Select.Trigger id="credits" class="w-full min-w-0">
+                <Select.Value>{selectValues.credits || "任意值"}</Select.Value>
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="" label="任意值">任意值</Select.Item>
+                {#each data.options.credits as option}
+                  <Select.Item value={String(option)} label={String(option)}>{option}</Select.Item>
+                {/each}
+              </Select.Content>
+            </Select.Root>
+          </div>
 
-          <label class="flex min-w-0 flex-col gap-2 text-sm font-medium">
-            <span>课程属性</span>
-            <select name="attribute" class={selectClass} value={data.filters.attribute}>
-              <option value="">任意属性</option>
-              {#each data.options.attributes as attribute}
-                <option value={attribute}>{attribute}</option>
-              {/each}
-            </select>
-          </label>
+          <div class="flex min-w-0 flex-col gap-2 text-sm font-medium">
+            <label for="attribute">课程属性</label>
+            <Select.Root type="single" name="attribute" bind:value={selectValues.attribute}>
+              <Select.Trigger id="attribute" class="w-full min-w-0">
+                <Select.Value>{selectValues.attribute || "任意属性"}</Select.Value>
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="" label="任意属性">任意属性</Select.Item>
+                {#each data.options.attributes as option}
+                  <Select.Item value={option} label={option}>{option}</Select.Item>
+                {/each}
+              </Select.Content>
+            </Select.Root>
+          </div>
 
           <label class="flex min-w-0 flex-col gap-2 text-sm font-medium">
             <span>最少评价数</span>
@@ -121,15 +146,28 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
             />
           </label>
 
-          <label class="flex min-w-0 flex-col gap-2 text-sm font-medium">
-            <span>排序</span>
-            <select name="sort" class={selectClass} value={data.filters.sort}>
-              <option value="popular">最多喜爱</option>
-              <option value="reviews">最多评价</option>
-              <option value="name">名称</option>
-              <option value="credits">最多学分</option>
-            </select>
-          </label>
+          <div class="flex min-w-0 flex-col gap-2 text-sm font-medium">
+            <label for="sort">排序</label>
+            <Select.Root type="single" name="sort" bind:value={selectValues.sort}>
+              <Select.Trigger id="sort" class="w-full min-w-0">
+                <Select.Value>
+                  {selectValues.sort === "reviews"
+                    ? "最多评价"
+                    : selectValues.sort === "name"
+                      ? "名称"
+                      : selectValues.sort === "credits"
+                        ? "最多学分"
+                        : "最多喜爱"}
+                </Select.Value>
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="popular" label="最多喜爱">最多喜爱</Select.Item>
+                <Select.Item value="reviews" label="最多评价">最多评价</Select.Item>
+                <Select.Item value="name" label="名称">名称</Select.Item>
+                <Select.Item value="credits" label="最多学分">最多学分</Select.Item>
+              </Select.Content>
+            </Select.Root>
+          </div>
         </div>
         <div class="mt-5 flex items-center gap-2">
           <Button type="submit" variant="outline">应用过滤</Button>
