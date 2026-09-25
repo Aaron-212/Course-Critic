@@ -1,113 +1,27 @@
-# Course Critic SQLite schema
+# SHOU LXK database schema
 
-The canonical import source is `archive/normalized/`. Run `python3 import_archive.py` to regenerate `data/shou-coursecritic.sqlite` and the matching D1 import file `data/shou-coursecritic.sql` from `schema.sql` and the archive. The database and SQL dump represent the same snapshot.
+[`schema.sql`](schema.sql) defines the current SQLite and Cloudflare D1 schema. All tables are `STRICT`. Course IDs and section `lid` values are `TEXT` to preserve source codes and leading zeroes. `credits`, `likes`, and `dislikes` are `INTEGER`; the two counters default to zero and must be nonnegative.
 
-## Data model
+| Table              | Grain                                      | Rows in the archived snapshot |
+| ------------------ | ------------------------------------------ | ----------------------------: |
+| `courses`          | One course code                            |                         1,910 |
+| `course_section`   | One API `lid` (course and teacher listing) |                         3,287 |
+| `reviews`          | One review in original response order      |                         5,631 |
+| `category_options` | One selectable category value              |                            97 |
 
-| Table                | Grain                                           | Source          |
-| -------------------- | ----------------------------------------------- | --------------- |
-| `courses`            | One distinct course code                        | `courses.json`  |
-| `course_instructors` | One API `lid` (course and teacher listing)      | `courses.json`  |
-| `review_fetches`     | One response per `lid`                          | `reviews.jsonl` |
-| `reviews`            | One review in its original response order       | `reviews.jsonl` |
-| `hot_entries`        | One ranked row, including repeated course codes | `hot.json`      |
-| `category_options`   | One selectable category value in source order   | `category.json` |
+A section belongs to one course. Reviews refer directly to sections through `lid`; `position` preserves the order of each source response. `posted_at_local` stores the source's UTC+8 wall-clock text. The original comma-separated teacher string remains in `teacher_list_raw`. Empty and missing attributes remain distinct (`''` and `NULL`).
 
-Course IDs and `lid` values are `TEXT` because source course codes include letters and leading-zero preservation matters. A `lid` identifies a course–teacher listing, not a globally unique teacher. The archive has one name per course ID, but college, elective type, credits, attributes, and counters can differ among listings of the same course; those fields therefore belong to `course_instructors`. The original comma-separated teacher string is retained as `teacher_list_raw` for fidelity. The hot list keeps its own observed fields and rank because the same course code can occur more than once.
+Review totals are computed from `reviews`, including for the home page ranking and minimum review filter. The old `hot_entries`, `review_fetches`, `comments_count`, and `hits` data is removed. Historical likes and dislikes are reset to zero during migration.
 
-`reviews.position` preserves response order because the source supplies no review ID. `posted_at_local` is the source's UTC+8 wall-clock text; `fetched_at` is an ISO timestamp with offset. They are intentionally distinct. The reported `comments_count` is retained even when it differs from the number of archived reviews. Source `Dislike` values can be negative, so those columns have no nonnegative check. Empty and missing attributes remain distinct (`''` and `NULL`).
+## Migration
 
-The raw HTTP responses and crawl manifests remain in `archive/` as provenance. The normalized files are the deduplicated application data used by this schema.
+[`migrations/0001_section_schema.sql`](migrations/0001_section_schema.sql) converts a database with the original `shou-coursecritic` schema. It copies sections and reviews into the new strict tables, recreates the review foreign key, then removes the old tables. Run it once against an existing database. For a new empty database, use `schema.sql` and import data in the new column layout.
 
-The Cloudflare D1 database is `shou-coursecritic` (binding `DB`) in APAC. Its ID is recorded in `wrangler.jsonc`. To load a fresh empty database from this snapshot, run `wrangler d1 execute shou-coursecritic --remote --file data/shou-coursecritic.sql --yes`. The SQL dump omits explicit transaction statements because D1 performs the file import atomically.
+The original archive importer and SQL snapshot are in the sibling `StructureAnalysis-shou-laixk` repository. That snapshot still uses the old schema. To use it locally, import the snapshot first and then apply the migration:
 
-## Validation for this snapshot
-
-| Table                |  Rows |
-| -------------------- | ----: |
-| `courses`            | 1,910 |
-| `course_instructors` | 3,287 |
-| `review_fetches`     | 3,287 |
-| `reviews`            | 5,631 |
-| `hot_entries`        |    60 |
-| `category_options`   |    97 |
-
-The importer checks these counts, review response lengths, course-name consistency, and foreign keys. SQLite `PRAGMA integrity_check` returns `ok` after import.
-
-## SQL
-
-The executable source of truth is [schema.sql](schema.sql). Its contents are reproduced below for review.
-
-```sql
-PRAGMA foreign_keys = ON;
-
-CREATE TABLE courses (
-    course_id TEXT PRIMARY KEY,
-    name TEXT NOT NULL
-) STRICT;
-
-CREATE TABLE course_instructors (
-    lid TEXT PRIMARY KEY,
-    course_id TEXT NOT NULL REFERENCES courses(course_id),
-    teacher_name TEXT NOT NULL,
-    college TEXT NOT NULL,
-    elective_type TEXT NOT NULL,
-    credits INTEGER NOT NULL CHECK (credits >= 0),
-    attribute TEXT,
-    comments_count INTEGER NOT NULL CHECK (comments_count >= 0),
-    likes INTEGER NOT NULL CHECK (likes >= 0),
-    dislikes INTEGER NOT NULL,
-    hits INTEGER NOT NULL CHECK (hits >= 0),
-    teacher_list_raw TEXT NOT NULL
-) STRICT;
-
-CREATE INDEX course_instructors_course_id_idx ON course_instructors(course_id);
-CREATE INDEX course_instructors_teacher_name_idx ON course_instructors(teacher_name);
-CREATE INDEX course_instructors_college_idx ON course_instructors(college);
-
-CREATE TABLE review_fetches (
-    lid TEXT PRIMARY KEY REFERENCES course_instructors(lid),
-    sheet TEXT NOT NULL,
-    class_id TEXT NOT NULL,
-    fetched_at TEXT NOT NULL,
-    comments_count INTEGER NOT NULL CHECK (comments_count >= 0),
-    likes INTEGER NOT NULL CHECK (likes >= 0),
-    dislikes INTEGER NOT NULL,
-    hits INTEGER NOT NULL CHECK (hits >= 0)
-) STRICT;
-
-CREATE TABLE reviews (
-    lid TEXT NOT NULL REFERENCES review_fetches(lid),
-    position INTEGER NOT NULL CHECK (position >= 1),
-    title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    posted_at_local TEXT NOT NULL,
-    PRIMARY KEY (lid, position)
-) WITHOUT ROWID, STRICT;
-
-CREATE INDEX reviews_posted_at_idx ON reviews(posted_at_local);
-
-CREATE TABLE hot_entries (
-    rank INTEGER PRIMARY KEY CHECK (rank >= 1),
-    course_id TEXT NOT NULL REFERENCES courses(course_id),
-    college TEXT NOT NULL,
-    elective_type TEXT NOT NULL,
-    credits INTEGER NOT NULL CHECK (credits >= 0),
-    attribute TEXT,
-    comments_count INTEGER NOT NULL CHECK (comments_count >= 0),
-    likes INTEGER NOT NULL CHECK (likes >= 0),
-    dislikes INTEGER NOT NULL,
-    hits INTEGER NOT NULL CHECK (hits >= 0),
-    teacher_list_raw TEXT NOT NULL
-) STRICT;
-
-CREATE INDEX hot_entries_course_id_idx ON hot_entries(course_id);
-
-CREATE TABLE category_options (
-    category_type TEXT NOT NULL CHECK (category_type IN ('attr', 'college', 'lessonType', 'score')),
-    position INTEGER NOT NULL CHECK (position >= 1),
-    value TEXT NOT NULL,
-    PRIMARY KEY (category_type, position),
-    UNIQUE (category_type, value)
-) WITHOUT ROWID, STRICT;
+```sh
+mise exec -- ./node_modules/.bin/wrangler d1 execute DB --local --file ../StructureAnalysis-shou-laixk/data/shou-coursecritic.sql
+mise exec -- ./node_modules/.bin/wrangler d1 migrations apply DB --local
 ```
+
+The Cloudflare database is `shou-lxk` in APAC, with binding `DB` and ID `8fd0140d-9e3e-435a-a42d-2e39574a7f84` in `wrangler.jsonc`. It was created from an export of `shou-coursecritic` and migrated with `0001_section_schema.sql`. The remote database contains 1,909 courses, 3,286 sections, 5,596 reviews, and 97 category options. The old database remains available as a rollback source.

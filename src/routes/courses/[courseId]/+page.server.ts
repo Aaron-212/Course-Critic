@@ -27,7 +27,7 @@ export const load: PageServerLoad = async ({ params, platform, url }) => {
     .prepare(`
     SELECT COUNT(*) AS total
     FROM reviews AS r
-    JOIN course_instructors AS ci ON ci.lid = r.lid
+    JOIN course_section AS ci ON ci.lid = r.lid
     WHERE ci.course_id = ?
   `)
     .bind(course.course_id)
@@ -40,7 +40,7 @@ export const load: PageServerLoad = async ({ params, platform, url }) => {
   const { results: reviews } = await db
     .prepare(`
     SELECT r.lid, r.position, r.title, r.content, r.posted_at_local, ci.teacher_name
-    FROM course_instructors AS ci
+    FROM course_section AS ci
     JOIN reviews AS r ON r.lid = ci.lid
     WHERE ci.course_id = ?
     ORDER BY r.posted_at_local DESC, r.lid, r.position

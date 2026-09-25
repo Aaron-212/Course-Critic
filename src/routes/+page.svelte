@@ -18,7 +18,7 @@ $effect(() => {
 const pageUrl = (page: number) => {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(data.filters)) {
-    if (value && !(key === "sort" && value === "popular")) params.set(key, value);
+    if (value && !(key === "sort" && value === "reviews")) params.set(key, value);
   }
   params.set("page", String(page));
   return `/?${params}`;
@@ -32,7 +32,7 @@ const hasAdvancedFilters = $derived(
     data.filters.attribute ||
     data.filters.credits ||
     data.filters.minReviews ||
-    data.filters.sort !== "popular",
+    data.filters.sort !== "reviews",
   ),
 );
 
@@ -151,17 +151,10 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
             <Select.Root type="single" name="sort" bind:value={selectValues.sort}>
               <Select.Trigger id="sort" class="w-full min-w-0">
                 <Select.Value>
-                  {selectValues.sort === "reviews"
-                    ? "最多评价"
-                    : selectValues.sort === "name"
-                      ? "名称"
-                      : selectValues.sort === "credits"
-                        ? "最多学分"
-                        : "最多喜爱"}
+                  {selectValues.sort === "name" ? "名称" : selectValues.sort === "credits" ? "最多学分" : "最多评价"}
                 </Select.Value>
               </Select.Trigger>
               <Select.Content>
-                <Select.Item value="popular" label="最多喜爱">最多喜爱</Select.Item>
                 <Select.Item value="reviews" label="最多评价">最多评价</Select.Item>
                 <Select.Item value="name" label="名称">名称</Select.Item>
                 <Select.Item value="credits" label="最多学分">最多学分</Select.Item>
@@ -201,7 +194,6 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
           >
             <div class="flex justify-between gap-2 text-xs text-muted-foreground">
               <span class="tabular-nums">{course.course_id}</span>
-              {#if course.rank !== null}<span class="font-semibold">#{course.rank}</span>{/if}
             </div>
             <div class="my-4">
               <h3 class="wrap-anywhere text-lg leading-snug font-semibold">{course.name}</h3>
@@ -215,7 +207,7 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
             </div>
             <div class="flex items-center gap-3 border-t border-border pt-3 text-xs text-muted-foreground">
               <span>{course.credits}学分</span>
-              <span>{course.comments_count}个评价</span>
+              <span>{course.review_count}个评价</span>
               <ArrowUpRight size={17} aria-hidden="true" class="ml-auto text-foreground" />
             </div>
           </a>
