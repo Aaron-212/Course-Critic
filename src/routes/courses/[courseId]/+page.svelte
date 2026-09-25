@@ -4,7 +4,11 @@ import type { PageData } from "./$types";
 
 let { data }: { data: PageData } = $props();
 
-const pageUrl = (page: number) => `?page=${page}`;
+const pageUrl = (page: number) => {
+  const params = new URLSearchParams({ page: String(page) });
+  if (data.backUrl !== "/") params.set("from", data.backUrl);
+  return `?${params}`;
+};
 </script>
 
 <svelte:head>
@@ -13,7 +17,9 @@ const pageUrl = (page: number) => `?page=${page}`;
 </svelte:head>
 
 <main class="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-  <a href="/" class="text-sm text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline">← Courses</a>
+  <a href={data.backUrl} class="text-sm text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline"
+    >← Courses</a
+  >
 
   <header class="mb-8 mt-6">
     <p class="mb-2 tabular-nums text-sm text-slate-500">{data.course.course_id}</p>

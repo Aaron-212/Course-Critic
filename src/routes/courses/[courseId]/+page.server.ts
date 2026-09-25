@@ -17,6 +17,19 @@ export const load: PageServerLoad = async ({ params, platform, url }) => {
   const db = platform?.env.DB;
   if (!db) error(503, "The course database is unavailable.");
 
+  let backUrl = "/";
+  const from = url.searchParams.get("from");
+  if (from) {
+    try {
+      const destination = new URL(from, url);
+      if (destination.origin === url.origin && destination.pathname === "/") {
+        backUrl = `${destination.pathname}${destination.search}`;
+      }
+    } catch {
+      // Ignore invalid return URLs and use the course list.
+    }
+  }
+
   const course = await db
     .prepare("SELECT course_id, name FROM courses WHERE course_id = ?")
     .bind(params.courseId)
@@ -49,5 +62,5 @@ export const load: PageServerLoad = async ({ params, platform, url }) => {
     .bind(course.course_id, PAGE_SIZE, (page - 1) * PAGE_SIZE)
     .all<Review>();
 
-  return { course, reviews, total, page, pages, pageSize: PAGE_SIZE };
+  return { course, reviews, total, page, pages, pageSize: PAGE_SIZE, backUrl };
 };

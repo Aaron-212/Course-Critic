@@ -1,4 +1,6 @@
 <script lang="ts">
+import { resolve } from "$app/paths";
+import { page } from "$app/state";
 import { ArrowUpRight, Search, SlidersHorizontal } from "@lucide/svelte";
 import { Button } from "$lib/components/ui/button/index.js";
 import { Input } from "$lib/components/ui/input/index.js";
@@ -22,6 +24,11 @@ const pageUrl = (page: number) => {
   }
   params.set("page", String(page));
   return `/?${params}`;
+};
+
+const courseUrl = (courseId: string) => {
+  const params = new URLSearchParams({ from: page.url.pathname + page.url.search });
+  return `${resolve("/courses/[courseId]", { courseId })}?${params}`;
 };
 
 const hasAdvancedFilters = $derived(
@@ -190,7 +197,7 @@ const tagClass = "max-w-full truncate rounded-md border border-border px-2 py-0.
         {#each data.courses as course (course.course_id)}
           <a
             class="flex min-h-55 min-w-0 flex-col rounded-lg border border-border bg-card p-5 text-card-foreground no-underline shadow-xs transition-all duration-150 hover:-translate-y-0.5 hover:border-ring hover:shadow-lg focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            href={`/courses/${encodeURIComponent(course.course_id)}`}
+            href={courseUrl(course.course_id)}
           >
             <div class="flex justify-between gap-2 text-xs text-muted-foreground">
               <span class="tabular-nums">{course.course_id}</span>
