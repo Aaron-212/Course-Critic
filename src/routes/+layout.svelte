@@ -12,10 +12,10 @@ let { children, data }: { children: Snippet; data: LayoutData } = $props();
     <a href="/" class="font-semibold tracking-tight text-foreground no-underline">SHOU LXK</a>
     <div class="flex items-center gap-2">
       {#if data.authenticated}
-        <Button href={data.accountUrl} variant="outline" size="sm">Account</Button>
+        <Button href={data.accountUrl} variant="outline" size="sm">账号</Button>
       {:else}
-        <Button href={data.signInUrl} variant="outline" size="sm">Log in</Button>
-        <Button href={data.registerUrl} size="sm">Register</Button>
+        <Button href={data.signInUrl} variant="outline" size="sm">登陆</Button>
+        <Button href={data.registerUrl} size="sm">注册</Button>
       {/if}
     </div>
   </div>
