@@ -1,3 +1,4 @@
+import { withTeachers } from "$lib/server/teachers";
 import { error, fail, redirect } from "@sveltejs/kit";
 import { isAuthenticated } from "$lib/server/auth";
 import type { Actions, PageServerLoad } from "./$types";
@@ -5,7 +6,7 @@ import type { Actions, PageServerLoad } from "./$types";
 const PAGE_SIZE = 20;
 
 type Course = { course_id: string; name: string };
-type Section = { lid: string; teacher_name: string };
+type Section = { lid: string };
 type Review = {
   lid: string;
   id: number;
@@ -38,17 +39,13 @@ export const load: PageServerLoad = async ({ params, platform, url, parent }) =>
   if (!course) error(404, "Course not found.");
 
   const sections = await db
-    .prepare("SELECT lid, teacher_name FROM course_section WHERE course_id = ? ORDER BY teacher_name, lid")
+    .prepare("SELECT lid FROM course_section WHERE course_id = ? ORDER BY lid")
     .bind(course.course_id)
     .all<Section>();
 
+  const sectionChoices = await withTeachers(db, sections.results);
   const lid = url.searchParams.get("lid");
-  const section = lid
-    ? await db
-        .prepare("SELECT lid, teacher_name FROM course_section WHERE lid = ? AND course_id = ?")
-        .bind(lid, course.course_id)
-        .first<Section>()
-    : null;
+  const section = lid ? sectionChoices.find((choice) => choice.lid === lid) : null;
   if (lid && !section) error(404, "Course section not found.");
   const sectionFilter = section ? "AND ci.lid = ?" : "";
   const reviewValues = section ? [course.course_id, section.lid] : [course.course_id];
@@ -56,7 +53,7 @@ export const load: PageServerLoad = async ({ params, platform, url, parent }) =>
   const countRow = await db
     .prepare(`
     SELECT COUNT(*) AS total
-    FROM reviews AS r
+    FROM course_reviews AS r
     JOIN course_section AS ci ON ci.lid = r.lid
     WHERE ci.course_id = ? ${sectionFilter}
   `)
@@ -74,7 +71,7 @@ export const load: PageServerLoad = async ({ params, platform, url, parent }) =>
     .prepare(`
     SELECT r.id, r.lid, r.title, r.content, r.posted_at_local
     FROM course_section AS ci
-    JOIN reviews AS r ON r.lid = ci.lid
+    JOIN course_reviews AS r ON r.lid = ci.lid
     WHERE ci.course_id = ? ${sectionFilter}
     ORDER BY r.posted_at_local ${direction}, r.id ${direction}
     LIMIT ? OFFSET ?
@@ -86,7 +83,7 @@ export const load: PageServerLoad = async ({ params, platform, url, parent }) =>
   return {
     course,
     section,
-    sections: sections.results,
+    sections: sectionChoices,
     reviews,
     sort,
     total,
@@ -120,19 +117,19 @@ export const actions: Actions = {
       return fail(400, { message: "请填写标题（最多 120 字）和正文（最多 5000 字）。", ...values });
     }
     if (typeof lid !== "string" || !lid) {
-      return fail(400, { message: "请选择课程对应的教师。", ...values });
+      return fail(400, { message: "请选择课程班级。", ...values });
     }
 
     const section = await db
       .prepare("SELECT lid FROM course_section WHERE lid = ? AND course_id = ?")
       .bind(lid, params.courseId)
       .first<{ lid: string }>();
-    if (!section) return fail(400, { message: "请选择有效的课程教师。", ...values });
+    if (!section) return fail(400, { message: "请选择有效的课程班级。", ...values });
 
     const postedAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 19).replace("T", " ");
     await db
       .prepare(`
-        INSERT INTO reviews (lid, title, content, posted_at_local)
+        INSERT INTO course_reviews (lid, title, content, posted_at_local)
         VALUES (?, ?, ?, ?)
       `)
       .bind(lid, title, content, postedAt)

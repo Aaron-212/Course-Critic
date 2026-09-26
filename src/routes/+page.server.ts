@@ -1,3 +1,4 @@
+import { withTeachers } from "$lib/server/teachers";
 import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
@@ -7,7 +8,6 @@ type SectionCard = {
   lid: string;
   course_id: string;
   name: string;
-  teacher_name: string;
   college: string;
   elective_type: string;
   credits: number;
@@ -81,7 +81,9 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     values.push(filters.q, filters.q);
   }
   if (filters.teacher) {
-    clauses.push("instr(lower(cs.teacher_name), lower(?)) > 0");
+    clauses.push(
+      "EXISTS (SELECT 1 FROM course_section_teachers AS st JOIN teachers AS t ON t.id = st.teacher_id WHERE st.lid = cs.lid AND instr(lower(t.name), lower(?)) > 0)",
+    );
     values.push(filters.teacher);
   }
   if (filters.college) {
@@ -127,7 +129,7 @@ export const load: PageServerLoad = async ({ platform, url }) => {
   const result = await db
     .prepare(
       `
-      SELECT cs.lid, c.course_id, c.name, cs.teacher_name, cs.college, cs.elective_type,
+      SELECT cs.lid, c.course_id, c.name, cs.college, cs.elective_type,
         cs.credits, cs.review_count
       ${matching}
       ORDER BY ${orderBy}, c.course_id, cs.lid
@@ -138,7 +140,7 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     .all<SectionCard>();
 
   return {
-    sections: result.results,
+    sections: await withTeachers(db, result.results),
     filters,
     isSearching,
     page: currentPage,

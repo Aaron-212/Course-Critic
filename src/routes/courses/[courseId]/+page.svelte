@@ -1,8 +1,10 @@
 <script lang="ts">
+import TeacherLinks from "$lib/components/teacher-links.svelte";
 import { goto } from "$app/navigation";
 import * as Select from "$lib/components/ui/select";
 import { ArrowLeft, MessageSquareText } from "@lucide/svelte";
 import { Button } from "$lib/components/ui/button";
+import * as Field from "$lib/components/ui/field";
 import { Input } from "$lib/components/ui/input";
 import { Separator } from "$lib/components/ui/separator";
 import { Textarea } from "$lib/components/ui/textarea";
@@ -37,7 +39,13 @@ const pageUrl = (page: number, sort = data.sort) => {
     </p>
     <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">{data.course.name}</h1>
     {#if data.section}
-      <p class="mt-3 text-base text-muted-foreground">授课教师 · {data.section.teacher_name}</p>
+      <p class="mt-3 text-base text-muted-foreground">授课教师 · <TeacherLinks teachers={data.section.teachers} /></p>
+    {:else}
+      <div class="mt-4 flex flex-col gap-2 text-sm text-muted-foreground">
+        {#each data.sections as section (section.lid)}
+          <p>班级 {section.lid} · <TeacherLinks teachers={section.teachers} /></p>
+        {/each}
+      </div>
     {/if}
   </header>
 
@@ -53,56 +61,60 @@ const pageUrl = (page: number, sort = data.sort) => {
       <h2 id="review-form-title" class="text-lg font-semibold tracking-tight">写评价</h2>
       <p class="mt-1 text-sm text-muted-foreground">评价匿名展示。登录仅用于防止垃圾内容。</p>
       {#if data.authenticated}
-        <form method="POST" action="?/submitReview" class="mt-5 flex flex-col gap-4">
-          {#if data.backUrl !== "/"}
-            <input type="hidden" name="from" value={data.backUrl} />
-          {/if}
-          {#if data.section || data.sections.length === 1}
-            <input type="hidden" name="lid" value={data.section?.lid ?? data.sections[0].lid} />
-          {:else}
-            <div class="flex flex-col gap-1.5">
-              <label for="review-section" class="text-sm font-medium">授课教师</label>
-              <select
-                id="review-section"
-                name="lid"
+        <form method="POST" action="?/submitReview" class="mt-5">
+          <Field.Group>
+            {#if data.backUrl !== "/"}
+              <input type="hidden" name="from" value={data.backUrl} />
+            {/if}
+            {#if data.section || data.sections.length === 1}
+              <input type="hidden" name="lid" value={data.section?.lid ?? data.sections[0].lid} />
+            {:else}
+              <Field.Field data-invalid={form?.message ? true : undefined}>
+                <Field.Label for="review-section">课程班级</Field.Label>
+                <select
+                  id="review-section"
+                  name="lid"
+                  required
+                  class="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-9 rounded-md border px-2.5 text-sm shadow-xs outline-none focus-visible:ring-3"
+                  value={form?.lid ?? ""}
+                >
+                  <option value="" disabled>请选择课程班级</option>
+                  {#each data.sections as choice (choice.lid)}
+                    <option value={choice.lid}
+                      >{choice.teachers.map((teacher) => teacher.name).join("、") || "教师信息待补充"} · {choice.lid}</option
+                    >
+                  {/each}
+                </select>
+              </Field.Field>
+            {/if}
+            <Field.Field data-invalid={form?.message ? true : undefined}>
+              <Field.Label for="review-title">标题</Field.Label>
+              <Input
+                id="review-title"
+                name="title"
+                maxlength={120}
                 required
-                class="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-9 rounded-md border px-2.5 text-sm shadow-xs outline-none focus-visible:ring-3"
-                value={form?.lid ?? ""}
-              >
-                <option value="" disabled>请选择授课教师</option>
-                {#each data.sections as choice (choice.lid)}
-                  <option value={choice.lid}>{choice.teacher_name}</option>
-                {/each}
-              </select>
-            </div>
-          {/if}
-          <div class="flex flex-col gap-1.5">
-            <label for="review-title" class="text-sm font-medium">标题</label>
-            <Input
-              id="review-title"
-              name="title"
-              maxlength={120}
-              required
-              value={form?.title ?? ""}
-              aria-invalid={form?.message ? true : undefined}
-            />
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label for="review-content" class="text-sm font-medium">正文</label>
-            <Textarea
-              id="review-content"
-              name="content"
-              rows={5}
-              maxlength={5000}
-              required
-              value={form?.content ?? ""}
-              aria-invalid={form?.message ? true : undefined}
-            />
-          </div>
-          {#if form?.message}
-            <p class="text-sm text-destructive" role="alert">{form.message}</p>
-          {/if}
-          <Button type="submit" class="self-start">提交评价</Button>
+                value={form?.title ?? ""}
+                aria-invalid={form?.message ? true : undefined}
+              />
+            </Field.Field>
+            <Field.Field data-invalid={form?.message ? true : undefined}>
+              <Field.Label for="review-content">正文</Field.Label>
+              <Textarea
+                id="review-content"
+                name="content"
+                rows={5}
+                maxlength={5000}
+                required
+                value={form?.content ?? ""}
+                aria-invalid={form?.message ? true : undefined}
+              />
+            </Field.Field>
+            {#if form?.message}
+              <p class="text-sm text-destructive" role="alert">{form.message}</p>
+            {/if}
+            <Button type="submit" class="self-start">提交评价</Button>
+          </Field.Group>
         </form>
       {:else}
         <Button href={data.signInUrl} class="mt-5">登录后写评价</Button>

@@ -1,0 +1,83 @@
+import { error, fail, redirect } from "@sveltejs/kit";
+import { isAuthenticated } from "$lib/server/auth";
+import type { Teacher } from "$lib/server/teachers";
+import type { Actions, PageServerLoad } from "./$types";
+
+const PAGE_SIZE = 20;
+type Review = { id: number; title: string; content: string; posted_at_local: string };
+type Course = { course_id: string; name: string; lid: string; college: string; credits: number };
+
+async function getTeacher(db: D1Database, id: string) {
+  if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) error(404, "Teacher not found.");
+  const teacher = await db.prepare("SELECT id, name FROM teachers WHERE id = ?").bind(Number(id)).first<Teacher>();
+  if (!teacher) error(404, "Teacher not found.");
+  return teacher;
+}
+
+export const load: PageServerLoad = async ({ params, platform, url, parent }) => {
+  const db = platform?.env.DB;
+  if (!db) error(503, "The course database is unavailable.");
+  const teacher = await getTeacher(db, params.teacherId);
+  const courses = await db
+    .prepare(`SELECT c.course_id, c.name, cs.lid, cs.college, cs.credits
+    FROM course_section_teachers AS st
+    JOIN course_section AS cs ON cs.lid = st.lid
+    JOIN courses AS c ON c.course_id = cs.course_id
+    WHERE st.teacher_id = ? ORDER BY c.name, c.course_id, cs.lid`)
+    .bind(teacher.id)
+    .all<Course>();
+  const count = await db
+    .prepare("SELECT COUNT(*) AS total FROM teacher_reviews WHERE teacher_id = ?")
+    .bind(teacher.id)
+    .first<{ total: number }>();
+  const total = count?.total ?? 0;
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const requestedPage = Number(url.searchParams.get("page") ?? "1");
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, pages) : 1;
+  const sort = url.searchParams.get("sort") === "oldest" ? "oldest" : "latest";
+  const direction = sort === "oldest" ? "ASC" : "DESC";
+  const reviews = await db
+    .prepare(`SELECT id, title, content, posted_at_local FROM teacher_reviews
+    WHERE teacher_id = ? ORDER BY posted_at_local ${direction}, id ${direction} LIMIT ? OFFSET ?`)
+    .bind(teacher.id, PAGE_SIZE, (page - 1) * PAGE_SIZE)
+    .all<Review>();
+  const { authenticated, signInUrl } = await parent();
+  return {
+    teacher,
+    courses: courses.results,
+    reviews: reviews.results,
+    total,
+    pages,
+    page,
+    pageSize: PAGE_SIZE,
+    sort,
+    authenticated,
+    signInUrl,
+    submitted: url.searchParams.get("submitted") === "1",
+  };
+};
+
+export const actions: Actions = {
+  submitReview: async ({ params, platform, request, url }) => {
+    const db = platform?.env.DB;
+    if (!db) error(503, "The course database is unavailable.");
+    const form = await request.formData();
+    const rawTitle = form.get("title");
+    const rawContent = form.get("content");
+    const title = typeof rawTitle === "string" ? rawTitle.trim() : "";
+    const content = typeof rawContent === "string" ? rawContent.trim() : "";
+    if (!(await isAuthenticated(request, url, platform?.env.PLATFORM_AUTH))) {
+      return fail(401, { message: "请先登录，再提交评价。", title, content });
+    }
+    const teacher = await getTeacher(db, params.teacherId);
+    if (!title || title.length > 120 || !content || content.length > 5000) {
+      return fail(400, { message: "请填写标题（最多 120 字）和正文（最多 5000 字）。", title, content });
+    }
+    const postedAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 19).replace("T", " ");
+    await db
+      .prepare("INSERT INTO teacher_reviews (teacher_id, title, content, posted_at_local) VALUES (?, ?, ?, ?)")
+      .bind(teacher.id, title, content, postedAt)
+      .run();
+    redirect(303, `${url.pathname}?submitted=1`);
+  },
+};

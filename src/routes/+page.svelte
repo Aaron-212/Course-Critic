@@ -1,4 +1,5 @@
 <script lang="ts">
+import TeacherLinks from "$lib/components/teacher-links.svelte";
 import { resolve } from "$app/paths";
 import { page } from "$app/state";
 import { ArrowUpRight, BookOpen, Search, SlidersHorizontal } from "@lucide/svelte";
@@ -213,9 +214,8 @@ const hasAdvancedFilters = $derived(
     {#if data.sections.length}
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {#each data.sections as section (section.lid)}
-          <a
+          <article
             class="group flex min-h-52 min-w-0 flex-col rounded-xl border border-border bg-card p-5 text-card-foreground no-underline shadow-xs transition-[border-color,box-shadow] hover:border-ring hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            href={sectionUrl(section.course_id, section.lid)}
           >
             <div class="flex items-start justify-between gap-3">
               <span class="text-xs font-medium tabular-nums text-muted-foreground">{section.course_id}</span>
@@ -225,8 +225,12 @@ const hasAdvancedFilters = $derived(
               />
             </div>
             <div class="mt-5 mb-6">
-              <h3 class="wrap-anywhere text-lg leading-snug font-semibold tracking-tight">{section.name}</h3>
-              <p class="mt-2 wrap-anywhere text-sm text-muted-foreground">{section.teacher_name}</p>
+              <h3 class="wrap-anywhere text-lg leading-snug font-semibold tracking-tight">
+                <a href={sectionUrl(section.course_id, section.lid)} class="hover:underline">{section.name}</a>
+              </h3>
+              <p class="mt-2 wrap-anywhere text-sm text-muted-foreground">
+                <TeacherLinks teachers={section.teachers} />
+              </p>
             </div>
             <div class="mt-auto flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
               <span class="truncate">{section.college}</span>
@@ -239,7 +243,7 @@ const hasAdvancedFilters = $derived(
               <span>{section.credits} 学分</span>
               <span class="tabular-nums">{section.review_count} 个评价</span>
             </div>
-          </a>
+          </article>
         {/each}
       </div>
     {:else}
