@@ -20,6 +20,7 @@ type CreditOption = { credits: number };
 const textFilter = (value: string | null) => (value ?? "").trim().slice(0, 100);
 
 export const load: PageServerLoad = async ({ platform, url }) => {
+  const startedAt = performance.now();
   const db = platform?.env.DB;
   if (!db) error(503, "The course database is unavailable.");
 
@@ -55,6 +56,7 @@ export const load: PageServerLoad = async ({ platform, url }) => {
   const requestedPage = Number(url.searchParams.get("page") ?? "1");
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
+  const optionsStartedAt = performance.now();
   const [colleges, electiveTypes, attributes, credits] = await Promise.all([
     db
       .prepare(
@@ -73,6 +75,7 @@ export const load: PageServerLoad = async ({ platform, url }) => {
       .all<Option>(),
     db.prepare("SELECT DISTINCT credits FROM course_section ORDER BY credits").all<CreditOption>(),
   ]);
+  const optionsMs = performance.now() - optionsStartedAt;
 
   const clauses: string[] = [];
   const values: (string | number)[] = [];
@@ -116,11 +119,13 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     LEFT JOIN section_reviews AS sr ON sr.lid = cs.lid
     ${where}`;
 
-  const countRow = await db
+  const countStartedAt = performance.now();
+  const countResult = await db
     .prepare(`${reviewCounts} SELECT COUNT(*) AS total ${matching}`)
     .bind(...values)
-    .first<{ total: number }>();
-  const total = countRow?.total ?? 0;
+    .all<{ total: number }>();
+  const countMs = performance.now() - countStartedAt;
+  const total = countResult.results[0]?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const currentPage = Math.min(page, pages);
 
@@ -130,6 +135,7 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     credits: "credits DESC, name COLLATE NOCASE ASC",
   }[sort];
 
+  const resultsStartedAt = performance.now();
   const result = await db
     .prepare(
       `
@@ -143,6 +149,26 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     )
     .bind(...values, PAGE_SIZE, (currentPage - 1) * PAGE_SIZE)
     .all<SectionCard>();
+  const resultsMs = performance.now() - resultsStartedAt;
+
+  console.log({
+    event: "course_search",
+    duration_ms: Math.round(performance.now() - startedAt),
+    options_ms: Math.round(optionsMs),
+    count_ms: Math.round(countMs),
+    results_ms: Math.round(resultsMs),
+    options_rows_read: [colleges, electiveTypes, attributes, credits].map((query) => query.meta.rows_read),
+    count_rows_read: countResult.meta.rows_read,
+    results_rows_read: result.meta.rows_read,
+    page: currentPage,
+    total,
+    sort,
+    filters: Object.fromEntries(
+      Object.entries(filters)
+        .filter(([name]) => name !== "sort")
+        .map(([name, value]) => [name, Boolean(value)]),
+    ),
+  });
 
   return {
     sections: result.results,
