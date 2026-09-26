@@ -41,7 +41,7 @@ export const load: PageServerLoad = async ({ params, platform, url, parent }) =>
     WHERE teacher_id = ? ORDER BY posted_at_local ${direction}, id ${direction} LIMIT ? OFFSET ?`)
     .bind(teacher.id, PAGE_SIZE, (page - 1) * PAGE_SIZE)
     .all<Review>();
-  const { authenticated, signInUrl } = await parent();
+  const { hasSessionCookie, signInUrl } = await parent();
   return {
     teacher,
     courses: courses.results,
@@ -51,7 +51,7 @@ export const load: PageServerLoad = async ({ params, platform, url, parent }) =>
     page,
     pageSize: PAGE_SIZE,
     sort,
-    authenticated,
+    hasSessionCookie,
     signInUrl,
     submitted: url.searchParams.get("submitted") === "1",
   };

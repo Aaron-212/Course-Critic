@@ -10,7 +10,7 @@
   let {
     heading,
     description,
-    authenticated,
+    hasSessionCookie,
     signInUrl,
     form,
     sections,
@@ -18,7 +18,7 @@
   }: {
     heading: string;
     description: string;
-    authenticated: boolean;
+    hasSessionCookie: boolean;
     signInUrl: string;
     form: FormData;
     sections?: Section[];
@@ -29,7 +29,7 @@
 <section class="mb-10 rounded-xl border border-border bg-card p-5 shadow-xs sm:p-6" aria-labelledby="review-form-title">
   <h2 id="review-form-title" class="text-lg font-semibold tracking-tight">{heading}</h2>
   <p class="mt-1 text-sm text-muted-foreground">{description}</p>
-  {#if authenticated}
+  {#if hasSessionCookie}
     <form method="POST" action="?/submitReview" class="mt-5">
       <Field.Group>
         {#if sections}
@@ -85,6 +85,9 @@
       </Field.Group>
     </form>
   {:else}
+    {#if form?.message}
+      <p class="mt-5 text-sm text-destructive" role="alert">{form.message}</p>
+    {/if}
     <Button href={signInUrl} class="mt-5">登录后写评价</Button>
   {/if}
 </section>

@@ -17,7 +17,7 @@ let { children, data }: { children: Snippet; data: LayoutData } = $props();
       <span>SHOU LXK</span>
     </a>
     <div class="flex items-center gap-2">
-      {#if data.authenticated}
+      {#if data.hasSessionCookie}
         <Button href={data.accountUrl} variant="outline" size="sm">账号</Button>
       {:else}
         <Button href={data.signInUrl} variant="outline" size="sm">登录</Button>

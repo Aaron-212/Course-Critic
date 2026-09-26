@@ -66,7 +66,7 @@ export const load: PageServerLoad = async ({ params, platform, url, parent }) =>
     .bind(...reviewValues, PAGE_SIZE, (page - 1) * PAGE_SIZE)
     .all<Review>();
 
-  const { authenticated, signInUrl } = await parent();
+  const { hasSessionCookie, signInUrl } = await parent();
   return {
     course,
     section,
@@ -77,7 +77,7 @@ export const load: PageServerLoad = async ({ params, platform, url, parent }) =>
     page,
     pages,
     pageSize: PAGE_SIZE,
-    authenticated,
+    hasSessionCookie,
     signInUrl,
     submitted: url.searchParams.get("submitted") === "1",
   };

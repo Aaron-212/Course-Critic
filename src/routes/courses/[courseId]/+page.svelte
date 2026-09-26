@@ -53,7 +53,7 @@
     <ReviewSendingCard
       heading="写评价"
       description="评价匿名展示。登录仅用于防止垃圾内容。"
-      authenticated={data.authenticated}
+      hasSessionCookie={data.hasSessionCookie}
       signInUrl={data.signInUrl}
       {form}
       sections={data.sections}

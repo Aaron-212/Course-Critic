@@ -59,7 +59,7 @@ const pageUrl = (page: number, sort = data.sort) => {
   <ReviewSendingCard
     heading="评价教师"
     description="分享对这位教师的教学体验。评价匿名展示，登录仅用于防止垃圾内容。"
-    authenticated={data.authenticated}
+    hasSessionCookie={data.hasSessionCookie}
     signInUrl={data.signInUrl}
     {form}
   />
