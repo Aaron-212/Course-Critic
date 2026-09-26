@@ -1,8 +1,9 @@
 <script lang="ts">
 import TeacherLinks from "$lib/components/teacher-links.svelte";
 import { resolve } from "$app/paths";
+import { goto } from "$app/navigation";
 import { page } from "$app/state";
-import { ArrowUpRight, BookOpen, Search, SlidersHorizontal } from "@lucide/svelte";
+import { ArrowUpRight, BookOpen, LoaderCircle, Search, SlidersHorizontal } from "@lucide/svelte";
 import { Button } from "$lib/components/ui/button/index.js";
 import { Input } from "$lib/components/ui/input/index.js";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "$lib/components/ui/input-group/index.js";
@@ -12,8 +13,27 @@ import PagePagination from "$lib/components/page-pagination.svelte";
 import type { PageData } from "./$types";
 
 let { data }: { data: PageData } = $props();
+let isLoading = $state(false);
 // svelte-ignore state_referenced_locally
 let selectValues = $state({ ...data.filters });
+
+async function submitSearch(event: SubmitEvent) {
+  event.preventDefault();
+  if (isLoading) return;
+
+  const form = event.currentTarget as HTMLFormElement;
+  const params = new URLSearchParams(
+    Array.from(new FormData(form), ([key, value]) => [key, String(value)]),
+  );
+  const url = new URL(form.action);
+  url.search = params.toString();
+  isLoading = true;
+  try {
+    await goto(url);
+  } finally {
+    isLoading = false;
+  }
+}
 
 $effect(() => {
   Object.assign(selectValues, data.filters);
@@ -61,7 +81,7 @@ const hasAdvancedFilters = $derived(
   </header>
   <section aria-labelledby="search-heading">
     <h2 id="search-heading" class="sr-only">搜索课程</h2>
-    <form method="GET" role="search" class="rounded-xl border border-border bg-card p-4 shadow-xs sm:p-6">
+    <form method="GET" role="search" onsubmit={submitSearch} class="rounded-xl border border-border bg-card p-4 shadow-xs sm:p-6">
       <div class="flex gap-2 sm:gap-3">
         <InputGroup class="h-10 min-w-0 flex-1">
           <InputGroupAddon>
@@ -75,7 +95,10 @@ const hasAdvancedFilters = $derived(
             class="h-full"
           />
         </InputGroup>
-        <Button type="submit" size="lg" class="sm:min-w-26">搜索</Button>
+        <Button type="submit" size="lg" class="sm:min-w-26" disabled={isLoading}>
+          {#if isLoading}<LoaderCircle class="size-4 animate-spin" aria-hidden="true" />{/if}
+          {isLoading ? "搜索中…" : "搜索"}
+        </Button>
       </div>
 
       <Separator class="my-5" />
@@ -189,14 +212,18 @@ const hasAdvancedFilters = $derived(
           </div>
         </div>
         <div class="mt-5 flex items-center gap-2">
-          <Button type="submit" variant="outline">应用过滤</Button>
+          <Button type="submit" variant="outline" disabled={isLoading}>
+            {#if isLoading}<LoaderCircle class="size-4 animate-spin" aria-hidden="true" />{/if}
+            {isLoading ? "过滤中…" : "应用过滤"}
+          </Button>
           <Button href="/" variant="ghost">清空</Button>
         </div>
       </details>
     </form>
   </section>
 
-  <section aria-labelledby="courses-heading" class="mt-10 sm:mt-12">
+  <section aria-labelledby="courses-heading" aria-busy={isLoading} class="mt-10 sm:mt-12">
+    <span class="sr-only" role="status">{isLoading ? "正在加载课程结果" : ""}</span>
     <div class="mb-5 flex items-end justify-between gap-4">
       <div>
         <p class="mb-1 text-xs font-medium tracking-widest text-muted-foreground uppercase">
