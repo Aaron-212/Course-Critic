@@ -2,6 +2,10 @@
 
 declare global {
   namespace App {
+    interface PageState {
+      detailFromApp?: boolean;
+    }
+
     interface Platform {
       env: {
         DB: D1Database;

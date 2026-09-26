@@ -1,24 +1,27 @@
 <script lang="ts">
-  import { afterNavigate, goto } from "$app/navigation";
+  import { afterNavigate, replaceState } from "$app/navigation";
+  import { page } from "$app/state";
   import { ArrowLeft } from "@lucide/svelte";
   import { Button } from "$lib/components/ui/button";
 
-  let cameFromMain = false;
-  let initialized = false;
+  let cameFromApp = false;
 
-  afterNavigate(({ from }) => {
-    if (initialized) return;
-    cameFromMain = from?.url.pathname === "/";
-    initialized = true;
+  afterNavigate(({ from, to, type }) => {
+    if (type === "enter" || type === "popstate") {
+      cameFromApp = page.state.detailFromApp === true;
+    } else if (from?.url.pathname !== to?.url.pathname) {
+      cameFromApp = from?.route.id != null;
+    }
+    if (type !== "enter") replaceState("", { ...page.state, detailFromApp: cameFromApp });
   });
 
   function goBack(event: MouseEvent) {
-    if (!cameFromMain || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (!cameFromApp || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     history.back();
   }
 </script>
 
 <Button href="/" variant="ghost" size="sm" class="-ml-3" onclick={goBack}>
-  <ArrowLeft data-icon="inline-start" aria-hidden="true" />返回课程列表
+  <ArrowLeft data-icon="inline-start" aria-hidden="true" />返回
 </Button>
