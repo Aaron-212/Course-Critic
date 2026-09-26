@@ -11,6 +11,7 @@ type SectionCard = {
   college: string;
   elective_type: string;
   credits: number;
+  review_count: number;
 };
 
 type Option = { value: string };
@@ -29,13 +30,17 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     electiveType: textFilter(url.searchParams.get("electiveType")),
     attribute: textFilter(url.searchParams.get("attribute")),
     credits: textFilter(url.searchParams.get("credits")),
+    minReviews: textFilter(url.searchParams.get("minReviews")),
     sort: textFilter(url.searchParams.get("sort")),
   };
 
   const credit = /^\d+$/.test(filters.credits) ? Number(filters.credits) : null;
-  const sort = ["name", "credits"].includes(filters.sort) ? filters.sort : "name";
+  const minReviews = /^\d+$/.test(filters.minReviews) ? Number(filters.minReviews) : null;
+  const sort = ["reviews", "name", "credits"].includes(filters.sort) ? filters.sort : "reviews";
   filters.sort = sort;
   filters.credits = credit !== null && Number.isSafeInteger(credit) ? String(credit) : "";
+  filters.minReviews =
+    minReviews !== null && Number.isSafeInteger(minReviews) && minReviews > 0 ? String(minReviews) : "";
 
   const isSearching = Boolean(
     filters.q ||
@@ -44,7 +49,8 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     filters.electiveType ||
     filters.attribute ||
     filters.credits ||
-    sort !== "name",
+    filters.minReviews ||
+    sort !== "reviews",
   );
   const requestedPage = Number(url.searchParams.get("page") ?? "1");
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
@@ -94,6 +100,10 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     clauses.push("cs.credits = ?");
     values.push(Number(filters.credits));
   }
+  if (filters.minReviews) {
+    clauses.push("cs.review_count >= ?");
+    values.push(Number(filters.minReviews));
+  }
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
   const matching = `
     FROM course_section AS cs
@@ -109,6 +119,7 @@ export const load: PageServerLoad = async ({ platform, url }) => {
   const currentPage = Math.min(page, pages);
 
   const orderBy = {
+    reviews: "cs.review_count DESC, name COLLATE NOCASE ASC",
     name: "name COLLATE NOCASE ASC",
     credits: "credits DESC, name COLLATE NOCASE ASC",
   }[sort];
@@ -117,7 +128,7 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     .prepare(
       `
       SELECT cs.lid, c.course_id, c.name, cs.teacher_name, cs.college, cs.elective_type,
-        cs.credits
+        cs.credits, cs.review_count
       ${matching}
       ORDER BY ${orderBy}, c.course_id, cs.lid
       LIMIT ? OFFSET ?
