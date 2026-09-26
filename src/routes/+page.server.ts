@@ -11,7 +11,6 @@ type SectionCard = {
   college: string;
   elective_type: string;
   credits: number;
-  review_count: number;
 };
 
 type Option = { value: string };
@@ -20,7 +19,6 @@ type CreditOption = { credits: number };
 const textFilter = (value: string | null) => (value ?? "").trim().slice(0, 100);
 
 export const load: PageServerLoad = async ({ platform, url }) => {
-  const startedAt = performance.now();
   const db = platform?.env.DB;
   if (!db) error(503, "The course database is unavailable.");
 
@@ -31,17 +29,13 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     electiveType: textFilter(url.searchParams.get("electiveType")),
     attribute: textFilter(url.searchParams.get("attribute")),
     credits: textFilter(url.searchParams.get("credits")),
-    minReviews: textFilter(url.searchParams.get("minReviews")),
     sort: textFilter(url.searchParams.get("sort")),
   };
 
   const credit = /^\d+$/.test(filters.credits) ? Number(filters.credits) : null;
-  const minReviews = /^\d+$/.test(filters.minReviews) ? Number(filters.minReviews) : null;
-  const sort = ["reviews", "name", "credits"].includes(filters.sort) ? filters.sort : "reviews";
+  const sort = ["name", "credits"].includes(filters.sort) ? filters.sort : "name";
   filters.sort = sort;
   filters.credits = credit !== null && Number.isSafeInteger(credit) ? String(credit) : "";
-  filters.minReviews =
-    minReviews !== null && Number.isSafeInteger(minReviews) && minReviews > 0 ? String(minReviews) : "";
 
   const isSearching = Boolean(
     filters.q ||
@@ -50,13 +44,11 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     filters.electiveType ||
     filters.attribute ||
     filters.credits ||
-    filters.minReviews ||
-    sort !== "reviews",
+    sort !== "name",
   );
   const requestedPage = Number(url.searchParams.get("page") ?? "1");
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
-  const optionsStartedAt = performance.now();
   const [colleges, electiveTypes, attributes, credits] = await Promise.all([
     db
       .prepare(
@@ -75,7 +67,6 @@ export const load: PageServerLoad = async ({ platform, url }) => {
       .all<Option>(),
     db.prepare("SELECT DISTINCT credits FROM course_section ORDER BY credits").all<CreditOption>(),
   ]);
-  const optionsMs = performance.now() - optionsStartedAt;
 
   const clauses: string[] = [];
   const values: (string | number)[] = [];
@@ -103,45 +94,30 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     clauses.push("cs.credits = ?");
     values.push(Number(filters.credits));
   }
-  if (filters.minReviews) {
-    clauses.push("COALESCE(sr.review_count, 0) >= ?");
-    values.push(Number(filters.minReviews));
-  }
-
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
-  const reviewCounts = `
-    WITH section_reviews AS (
-      SELECT lid, COUNT(*) AS review_count FROM reviews GROUP BY lid
-    )`;
   const matching = `
     FROM course_section AS cs
     JOIN courses AS c ON c.course_id = cs.course_id
-    LEFT JOIN section_reviews AS sr ON sr.lid = cs.lid
     ${where}`;
 
-  const countStartedAt = performance.now();
-  const countResult = await db
-    .prepare(`${reviewCounts} SELECT COUNT(*) AS total ${matching}`)
+  const countRow = await db
+    .prepare(`SELECT COUNT(*) AS total ${matching}`)
     .bind(...values)
-    .all<{ total: number }>();
-  const countMs = performance.now() - countStartedAt;
-  const total = countResult.results[0]?.total ?? 0;
+    .first<{ total: number }>();
+  const total = countRow?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const currentPage = Math.min(page, pages);
 
   const orderBy = {
-    reviews: "review_count DESC, name COLLATE NOCASE ASC",
     name: "name COLLATE NOCASE ASC",
     credits: "credits DESC, name COLLATE NOCASE ASC",
   }[sort];
 
-  const resultsStartedAt = performance.now();
   const result = await db
     .prepare(
       `
-      ${reviewCounts}
       SELECT cs.lid, c.course_id, c.name, cs.teacher_name, cs.college, cs.elective_type,
-        cs.credits, COALESCE(sr.review_count, 0) AS review_count
+        cs.credits
       ${matching}
       ORDER BY ${orderBy}, c.course_id, cs.lid
       LIMIT ? OFFSET ?
@@ -149,26 +125,6 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     )
     .bind(...values, PAGE_SIZE, (currentPage - 1) * PAGE_SIZE)
     .all<SectionCard>();
-  const resultsMs = performance.now() - resultsStartedAt;
-
-  console.log({
-    event: "course_search",
-    duration_ms: Math.round(performance.now() - startedAt),
-    options_ms: Math.round(optionsMs),
-    count_ms: Math.round(countMs),
-    results_ms: Math.round(resultsMs),
-    options_rows_read: [colleges, electiveTypes, attributes, credits].map((query) => query.meta.rows_read),
-    count_rows_read: countResult.meta.rows_read,
-    results_rows_read: result.meta.rows_read,
-    page: currentPage,
-    total,
-    sort,
-    filters: Object.fromEntries(
-      Object.entries(filters)
-        .filter(([name]) => name !== "sort")
-        .map(([name, value]) => [name, Boolean(value)]),
-    ),
-  });
 
   return {
     sections: result.results,

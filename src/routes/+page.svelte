@@ -21,7 +21,7 @@ $effect(() => {
 const pageUrl = (page: number) => {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(data.filters)) {
-    if (value && !(key === "sort" && value === "reviews")) params.set(key, value);
+    if (value && !(key === "sort" && value === "name")) params.set(key, value);
   }
   params.set("page", String(page));
   return `/?${params}`;
@@ -39,8 +39,7 @@ const hasAdvancedFilters = $derived(
     data.filters.electiveType ||
     data.filters.attribute ||
     data.filters.credits ||
-    data.filters.minReviews ||
-    data.filters.sort !== "reviews",
+    data.filters.sort !== "name",
   ),
 );
 </script>
@@ -157,29 +156,16 @@ const hasAdvancedFilters = $derived(
             </Select.Root>
           </div>
 
-          <label class="flex min-w-0 flex-col gap-2 text-sm font-medium">
-            <span>最少评价数</span>
-            <Input
-              name="minReviews"
-              type="number"
-              min="0"
-              step="1"
-              value={data.filters.minReviews}
-              placeholder="任意值"
-            />
-          </label>
-
           <div class="flex min-w-0 flex-col gap-2 text-sm font-medium">
             <label for="sort">排序</label>
             <Select.Root type="single" name="sort" bind:value={selectValues.sort}>
               <Select.Trigger id="sort" class="w-full min-w-0">
                 <Select.Value>
-                  {selectValues.sort === "name" ? "名称" : selectValues.sort === "credits" ? "最多学分" : "最多评价"}
+                  {selectValues.sort === "credits" ? "最多学分" : "名称"}
                 </Select.Value>
               </Select.Trigger>
               <Select.Content>
                 <Select.Group>
-                  <Select.Item value="reviews" label="最多评价">最多评价</Select.Item>
                   <Select.Item value="name" label="名称">名称</Select.Item>
                   <Select.Item value="credits" label="最多学分">最多学分</Select.Item>
                 </Select.Group>
@@ -202,7 +188,7 @@ const hasAdvancedFilters = $derived(
           {data.isSearching ? "课程搜索" : "探索"}
         </p>
         <h2 id="courses-heading" class="text-2xl font-semibold tracking-tight">
-          {data.isSearching ? "搜索结果" : "热门课程"}
+          {data.isSearching ? "搜索结果" : "课程列表"}
         </h2>
       </div>
       <p class="whitespace-nowrap text-sm tabular-nums text-muted-foreground">
@@ -235,9 +221,8 @@ const hasAdvancedFilters = $derived(
                 >{/if}
             </div>
             <Separator class="my-3" />
-            <div class="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <div class="text-xs text-muted-foreground">
               <span>{section.credits} 学分</span>
-              <span class="tabular-nums">{section.review_count} 个评价</span>
             </div>
           </a>
         {/each}

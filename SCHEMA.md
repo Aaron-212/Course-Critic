@@ -11,7 +11,7 @@
 
 A section belongs to one course. Reviews refer directly to sections through `lid`; `id` is an automatically assigned integer primary key. Reviews default to newest first by `posted_at_local`, with `id` breaking timestamp ties; readers can switch to oldest first. `posted_at_local` stores the source's UTC+8 wall-clock text. The original comma-separated teacher string remains in `teacher_list_raw`. Empty and missing attributes remain distinct (`''` and `NULL`).
 
-Review totals are computed from `reviews` per section, including for the home page ranking and minimum review filter. The home page lists `course_section` rows and joins `courses` for course names. The old `hot_entries`, `review_fetches`, `comments_count`, and `hits` data is removed. Historical likes and dislikes are reset to zero during migration.
+The home page lists `course_section` rows and joins `courses` for course names. It does not aggregate review totals. The old `hot_entries`, `review_fetches`, `comments_count`, and `hits` data is removed. Historical likes and dislikes are reset to zero during migration.
 
 ## Migration
 
