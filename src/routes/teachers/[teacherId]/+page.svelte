@@ -4,11 +4,9 @@ import { goto } from "$app/navigation";
 import * as Select from "$lib/components/ui/select";
 import { ArrowLeft, MessageSquareText } from "@lucide/svelte";
 import { Button } from "$lib/components/ui/button";
-import * as Field from "$lib/components/ui/field";
-import { Input } from "$lib/components/ui/input";
 import { Separator } from "$lib/components/ui/separator";
-import { Textarea } from "$lib/components/ui/textarea";
 import PagePagination from "$lib/components/page-pagination.svelte";
+import ReviewSendingCard from "$lib/components/review-sending-card.svelte";
 import type { ActionData, PageData } from "./$types";
 
 let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -59,48 +57,13 @@ const pageUrl = (page: number, sort = data.sort) => {
     </ul>
   </section>
 
-  <section
-    class="mb-10 rounded-xl border border-border bg-card p-5 shadow-xs sm:p-6"
-    aria-labelledby="review-form-title"
-  >
-    <h2 id="review-form-title" class="text-lg font-semibold tracking-tight">评价教师</h2>
-    <p class="mt-1 text-sm text-muted-foreground">分享对这位教师的教学体验。评价匿名展示，登录仅用于防止垃圾内容。</p>
-    {#if data.authenticated}
-      <form method="POST" action="?/submitReview" class="mt-5">
-        <Field.Group>
-          <Field.Field data-invalid={form?.message ? true : undefined}>
-            <Field.Label for="review-title">标题</Field.Label>
-            <Input
-              id="review-title"
-              name="title"
-              maxlength={120}
-              required
-              value={form?.title ?? ""}
-              aria-invalid={form?.message ? true : undefined}
-            />
-          </Field.Field>
-          <Field.Field data-invalid={form?.message ? true : undefined}>
-            <Field.Label for="review-content">正文</Field.Label>
-            <Textarea
-              id="review-content"
-              name="content"
-              rows={5}
-              maxlength={5000}
-              required
-              value={form?.content ?? ""}
-              aria-invalid={form?.message ? true : undefined}
-            />
-          </Field.Field>
-          {#if form?.message}
-            <p class="text-sm text-destructive" role="alert">{form.message}</p>
-          {/if}
-          <Button type="submit" class="self-start">提交评价</Button>
-        </Field.Group>
-      </form>
-    {:else}
-      <Button href={data.signInUrl} class="mt-5">登录后写评价</Button>
-    {/if}
-  </section>
+  <ReviewSendingCard
+    heading="评价教师"
+    description="分享对这位教师的教学体验。评价匿名展示，登录仅用于防止垃圾内容。"
+    authenticated={data.authenticated}
+    signInUrl={data.signInUrl}
+    {form}
+  />
 
   <div class="mb-5 flex flex-wrap items-center justify-between gap-4">
     <h2 class="text-lg font-semibold tracking-tight">同学评价</h2>

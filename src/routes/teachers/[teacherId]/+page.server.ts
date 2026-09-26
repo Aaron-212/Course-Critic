@@ -71,7 +71,7 @@ export const actions: Actions = {
     }
     const teacher = await getTeacher(db, params.teacherId);
     if (!title || title.length > 120 || !content || content.length > 5000) {
-      return fail(400, { message: "请填写标题（最多 120 字）和正文（最多 5000 字）。", title, content });
+      return fail(400, { message: "请填写标题（最多120字）和正文（最多5000字）。", title, content });
     }
     const postedAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 19).replace("T", " ");
     await db

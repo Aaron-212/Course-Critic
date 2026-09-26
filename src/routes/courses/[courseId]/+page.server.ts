@@ -114,7 +114,7 @@ export const actions: Actions = {
     }
 
     if (!title || title.length > 120 || !content || content.length > 5000) {
-      return fail(400, { message: "请填写标题（最多 120 字）和正文（最多 5000 字）。", ...values });
+      return fail(400, { message: "请填写标题（最多120字）和正文（最多5000字）。", ...values });
     }
     if (typeof lid !== "string" || !lid) {
       return fail(400, { message: "请选择课程班级。", ...values });

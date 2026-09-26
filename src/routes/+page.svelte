@@ -1,69 +1,67 @@
 <script lang="ts">
-import TeacherLinks from "$lib/components/teacher-links.svelte";
-import { resolve } from "$app/paths";
-import { goto } from "$app/navigation";
-import { page } from "$app/state";
-import { ArrowUpRight, BookOpen, LoaderCircle, Search, SlidersHorizontal } from "@lucide/svelte";
-import { Button } from "$lib/components/ui/button/index.js";
-import { Input } from "$lib/components/ui/input/index.js";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "$lib/components/ui/input-group/index.js";
-import * as Select from "$lib/components/ui/select/index.js";
-import { Separator } from "$lib/components/ui/separator";
-import PagePagination from "$lib/components/page-pagination.svelte";
-import type { PageData } from "./$types";
+  import TeacherLinks from "$lib/components/teacher-links.svelte";
+  import { resolve } from "$app/paths";
+  import { goto } from "$app/navigation";
+  import { page } from "$app/state";
+  import { ArrowUpRight, BookOpen, LoaderCircle, Search, SlidersHorizontal } from "@lucide/svelte";
+  import { Button } from "$lib/components/ui/button/index.js";
+  import { Input } from "$lib/components/ui/input/index.js";
+  import { InputGroup, InputGroupAddon, InputGroupInput } from "$lib/components/ui/input-group/index.js";
+  import * as Select from "$lib/components/ui/select/index.js";
+  import { Separator } from "$lib/components/ui/separator";
+  import PagePagination from "$lib/components/page-pagination.svelte";
+  import type { PageData } from "./$types";
 
-let { data }: { data: PageData } = $props();
-let isLoading = $state(false);
-// svelte-ignore state_referenced_locally
-let selectValues = $state({ ...data.filters });
+  let { data }: { data: PageData } = $props();
+  let isLoading = $state(false);
+  // svelte-ignore state_referenced_locally
+  let selectValues = $state({ ...data.filters });
 
-async function submitSearch(event: SubmitEvent) {
-  event.preventDefault();
-  if (isLoading) return;
+  async function submitSearch(event: SubmitEvent) {
+    event.preventDefault();
+    if (isLoading) return;
 
-  const form = event.currentTarget as HTMLFormElement;
-  const params = new URLSearchParams(
-    Array.from(new FormData(form), ([key, value]) => [key, String(value)]),
+    const form = event.currentTarget as HTMLFormElement;
+    const params = new URLSearchParams(Array.from(new FormData(form), ([key, value]) => [key, String(value)]));
+    const url = new URL(form.action);
+    url.search = params.toString();
+    isLoading = true;
+    try {
+      await goto(url);
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  $effect(() => {
+    Object.assign(selectValues, data.filters);
+  });
+
+  const pageUrl = (page: number) => {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(data.filters)) {
+      if (value && !(key === "sort" && value === "reviews")) params.set(key, value);
+    }
+    params.set("page", String(page));
+    return `/?${params}`;
+  };
+
+  const sectionUrl = (courseId: string, lid: string) => {
+    const params = new URLSearchParams({ lid, from: page.url.pathname + page.url.search });
+    return `${resolve("/courses/[courseId]", { courseId })}?${params}`;
+  };
+
+  const hasAdvancedFilters = $derived(
+    Boolean(
+      data.filters.teacher ||
+      data.filters.college ||
+      data.filters.electiveType ||
+      data.filters.attribute ||
+      data.filters.credits ||
+      data.filters.minReviews ||
+      data.filters.sort !== "reviews",
+    ),
   );
-  const url = new URL(form.action);
-  url.search = params.toString();
-  isLoading = true;
-  try {
-    await goto(url);
-  } finally {
-    isLoading = false;
-  }
-}
-
-$effect(() => {
-  Object.assign(selectValues, data.filters);
-});
-
-const pageUrl = (page: number) => {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(data.filters)) {
-    if (value && !(key === "sort" && value === "reviews")) params.set(key, value);
-  }
-  params.set("page", String(page));
-  return `/?${params}`;
-};
-
-const sectionUrl = (courseId: string, lid: string) => {
-  const params = new URLSearchParams({ lid, from: page.url.pathname + page.url.search });
-  return `${resolve("/courses/[courseId]", { courseId })}?${params}`;
-};
-
-const hasAdvancedFilters = $derived(
-  Boolean(
-    data.filters.teacher ||
-    data.filters.college ||
-    data.filters.electiveType ||
-    data.filters.attribute ||
-    data.filters.credits ||
-    data.filters.minReviews ||
-    data.filters.sort !== "reviews",
-  ),
-);
 </script>
 
 <svelte:head>
@@ -81,7 +79,12 @@ const hasAdvancedFilters = $derived(
   </header>
   <section aria-labelledby="search-heading">
     <h2 id="search-heading" class="sr-only">搜索课程</h2>
-    <form method="GET" role="search" onsubmit={submitSearch} class="rounded-xl border border-border bg-card p-4 shadow-xs sm:p-6">
+    <form
+      method="GET"
+      role="search"
+      onsubmit={submitSearch}
+      class="rounded-xl border border-border bg-card p-4 shadow-xs sm:p-6"
+    >
       <div class="flex gap-2 sm:gap-3">
         <InputGroup class="h-10 min-w-0 flex-1">
           <InputGroupAddon>
@@ -234,7 +237,7 @@ const hasAdvancedFilters = $derived(
         </h2>
       </div>
       <p class="whitespace-nowrap text-sm tabular-nums text-muted-foreground">
-        共 {data.total.toLocaleString()} 个班级
+        共{data.total.toLocaleString()}个班级
       </p>
     </div>
 
@@ -267,8 +270,8 @@ const hasAdvancedFilters = $derived(
             </div>
             <Separator class="my-3" />
             <div class="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-              <span>{section.credits} 学分</span>
-              <span class="tabular-nums">{section.review_count} 个评价</span>
+              <span>{section.credits}学分</span>
+              <span class="tabular-nums">{section.review_count}个评价</span>
             </div>
           </article>
         {/each}
