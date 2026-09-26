@@ -2,7 +2,6 @@
   import TeacherLinks from "$lib/components/teacher-links.svelte";
   import { resolve } from "$app/paths";
   import { goto } from "$app/navigation";
-  import { page } from "$app/state";
   import { ArrowUpRight, BookOpen, LoaderCircle, Search, SlidersHorizontal } from "@lucide/svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { Input } from "$lib/components/ui/input/index.js";
@@ -47,7 +46,7 @@
   };
 
   const sectionUrl = (courseId: string, lid: string) => {
-    const params = new URLSearchParams({ lid, from: page.url.pathname + page.url.search });
+    const params = new URLSearchParams({ lid });
     return `${resolve("/courses/[courseId]", { courseId })}?${params}`;
   };
 

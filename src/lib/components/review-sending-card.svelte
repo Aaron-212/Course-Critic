@@ -15,7 +15,6 @@
     form,
     sections,
     selectedLid,
-    backUrl,
   }: {
     heading: string;
     description: string;
@@ -24,7 +23,6 @@
     form: FormData;
     sections?: Section[];
     selectedLid?: string;
-    backUrl?: string;
   } = $props();
 </script>
 
@@ -34,9 +32,6 @@
   {#if authenticated}
     <form method="POST" action="?/submitReview" class="mt-5">
       <Field.Group>
-        {#if backUrl && backUrl !== "/"}
-          <input type="hidden" name="from" value={backUrl} />
-        {/if}
         {#if sections}
           {#if selectedLid || sections.length === 1}
             <input type="hidden" name="lid" value={selectedLid ?? sections[0].lid} />

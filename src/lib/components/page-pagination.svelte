@@ -8,12 +8,14 @@ let {
   page,
   label,
   pageUrl,
+  replaceState = false,
 }: {
   count: number;
   perPage: number;
   page: number;
   label: string;
   pageUrl: (page: number) => string;
+  replaceState?: boolean;
 } = $props();
 </script>
 
@@ -23,7 +25,7 @@ let {
   {page}
   aria-label={label}
   class="mt-6"
-  onPageChange={(nextPage) => goto(pageUrl(nextPage))}
+  onPageChange={(nextPage) => goto(pageUrl(nextPage), { replaceState })}
 >
   {#snippet children({ pages, currentPage })}
     <Pagination.Content>

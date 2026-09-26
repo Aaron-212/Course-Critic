@@ -1,8 +1,9 @@
 <script lang="ts">
   import TeacherLinks from "$lib/components/teacher-links.svelte";
+  import BackToList from "$lib/components/back-to-list.svelte";
   import { goto } from "$app/navigation";
   import * as Select from "$lib/components/ui/select";
-  import { ArrowLeft, MessageSquareText } from "@lucide/svelte";
+  import { MessageSquareText } from "@lucide/svelte";
   import { Button } from "$lib/components/ui/button";
   import { Separator } from "$lib/components/ui/separator";
   import PagePagination from "$lib/components/page-pagination.svelte";
@@ -15,7 +16,6 @@
     const params = new URLSearchParams({ page: String(page) });
     if (sort === "oldest") params.set("sort", sort);
     if (data.section) params.set("lid", data.section.lid);
-    if (data.backUrl !== "/") params.set("from", data.backUrl);
     return `?${params}`;
   };
 </script>
@@ -26,9 +26,7 @@
 </svelte:head>
 
 <main class="mx-auto max-w-4xl px-4 pb-20 pt-8 sm:px-6 sm:pt-10">
-  <Button href={data.backUrl} variant="ghost" size="sm" class="-ml-3">
-    <ArrowLeft data-icon="inline-start" aria-hidden="true" />返回课程列表
-  </Button>
+  <BackToList />
 
   <header class="mt-8 mb-8 sm:mt-10 sm:mb-10">
     <p class="mb-3 text-xs font-medium tracking-widest text-muted-foreground uppercase">
@@ -60,7 +58,6 @@
       {form}
       sections={data.sections}
       selectedLid={data.section?.lid}
-      backUrl={data.backUrl}
     />
   {/if}
 
@@ -73,7 +70,7 @@
         value={data.sort}
         onValueChange={(value) => {
           if (value === "latest" || value === "oldest") {
-            void goto(pageUrl(1, value), { noScroll: true, keepFocus: true });
+            void goto(pageUrl(1, value), { noScroll: true, keepFocus: true, replaceState: true });
           }
         }}
       >
@@ -112,11 +109,11 @@
       >
       <h3 class="text-lg font-semibold">暂无评价</h3>
       <p class="text-sm text-muted-foreground">这门课还没有可展示的评价。</p>
-      <Button href={data.backUrl} variant="outline" class="mt-1">浏览其他课程</Button>
+      <Button href="/" variant="outline" class="mt-1">浏览其他课程</Button>
     </div>
   {/if}
 
   {#if data.pages > 1}
-    <PagePagination count={data.total} perPage={data.pageSize} page={data.page} label="评价页面" {pageUrl} />
+    <PagePagination count={data.total} perPage={data.pageSize} page={data.page} label="评价页面" {pageUrl} replaceState />
   {/if}
 </main>

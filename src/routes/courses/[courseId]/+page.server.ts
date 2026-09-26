@@ -19,19 +19,6 @@ export const load: PageServerLoad = async ({ params, platform, url, parent }) =>
   const db = platform?.env.DB;
   if (!db) error(503, "The course database is unavailable.");
 
-  let backUrl = "/";
-  const from = url.searchParams.get("from");
-  if (from) {
-    try {
-      const destination = new URL(from, url);
-      if (destination.origin === url.origin && destination.pathname === "/") {
-        backUrl = `${destination.pathname}${destination.search}`;
-      }
-    } catch {
-      // Ignore invalid return URLs and use the course list.
-    }
-  }
-
   const course = await db
     .prepare("SELECT course_id, name FROM courses WHERE course_id = ?")
     .bind(params.courseId)
@@ -90,7 +77,6 @@ export const load: PageServerLoad = async ({ params, platform, url, parent }) =>
     page,
     pages,
     pageSize: PAGE_SIZE,
-    backUrl,
     authenticated,
     signInUrl,
     submitted: url.searchParams.get("submitted") === "1",
@@ -137,8 +123,6 @@ export const actions: Actions = {
 
     const destination = new URL(url.pathname, url);
     destination.searchParams.set("lid", lid);
-    const from = form.get("from");
-    if (typeof from === "string" && from) destination.searchParams.set("from", from);
     destination.searchParams.set("submitted", "1");
     redirect(303, destination);
   },

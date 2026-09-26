@@ -1,8 +1,9 @@
 <script lang="ts">
 import { resolve } from "$app/paths";
+import BackToList from "$lib/components/back-to-list.svelte";
 import { goto } from "$app/navigation";
 import * as Select from "$lib/components/ui/select";
-import { ArrowLeft, MessageSquareText } from "@lucide/svelte";
+import { MessageSquareText } from "@lucide/svelte";
 import { Button } from "$lib/components/ui/button";
 import { Separator } from "$lib/components/ui/separator";
 import PagePagination from "$lib/components/page-pagination.svelte";
@@ -24,9 +25,7 @@ const pageUrl = (page: number, sort = data.sort) => {
 </svelte:head>
 
 <main class="mx-auto max-w-4xl px-4 pb-20 pt-8 sm:px-6 sm:pt-10">
-  <Button href="/" variant="ghost" size="sm" class="-ml-3">
-    <ArrowLeft data-icon="inline-start" aria-hidden="true" />返回课程列表
-  </Button>
+  <BackToList />
 
   <header class="mt-8 mb-8 sm:mt-10 sm:mb-10">
     <p class="mb-3 text-xs font-medium tracking-widest text-muted-foreground">教师评价</p>
@@ -74,7 +73,7 @@ const pageUrl = (page: number, sort = data.sort) => {
         value={data.sort}
         onValueChange={(value) => {
           if (value === "latest" || value === "oldest") {
-            void goto(pageUrl(1, value), { noScroll: true, keepFocus: true });
+            void goto(pageUrl(1, value), { noScroll: true, keepFocus: true, replaceState: true });
           }
         }}
       >
@@ -118,6 +117,6 @@ const pageUrl = (page: number, sort = data.sort) => {
   {/if}
 
   {#if data.pages > 1}
-    <PagePagination count={data.total} perPage={data.pageSize} page={data.page} label="评价页面" {pageUrl} />
+    <PagePagination count={data.total} perPage={data.pageSize} page={data.page} label="评价页面" {pageUrl} replaceState />
   {/if}
 </main>
